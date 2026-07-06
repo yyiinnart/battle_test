@@ -1,0 +1,2241 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<script>
+(function(){
+  if(!/^https?:$/.test(location.protocol)) return;
+  const url = new URL(location.href);
+  if(url.searchParams.has("_v")) return;
+  url.searchParams.set("_v", Date.now().toString(36));
+  location.replace(url.toString());
+})();
+</script>
+<title>戰鬥系統 UI 原型 v1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;700;900&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#171210;            /* 墨煙黑 */
+  --panel:#221a14;          /* 暗檀 */
+  --panel2:#2b2119;
+  --line:#3d2f20;
+  --line-soft:#33281c;
+  --cinnabar:#c9372c;       /* 朱砂 */
+  --cinnabar-hi:#e8603f;
+  --gold:#d4a24e;           /* 泥金 */
+  --gold-pale:#f1dca8;
+  --ash:#a79c8b;            /* 香灰（次要字） */
+  --ash-dim:#6f6659;
+  --paper:#efe6d3;          /* 主要文字 */
+  --yin:#6fa3a8;            /* 陰青（鬼／大失敗） */
+  --earth:#9c6b3f;          /* 地 */
+  --ok:#8fae6a;
+  --serif:"Noto Serif TC","PMingLiU",serif;
+  --sans:"Noto Sans TC","Microsoft JhengHei",sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  background:var(--ink);
+  color:var(--paper);
+  font-family:var(--sans);
+  font-size:14px;
+  line-height:1.6;
+  background-image:
+    radial-gradient(ellipse 90% 60% at 50% -10%, rgba(201,55,44,.06), transparent 60%),
+    radial-gradient(ellipse 60% 50% at 85% 110%, rgba(212,162,78,.05), transparent 60%);
+  min-height:100vh;
+}
+button{font-family:var(--sans);cursor:pointer;border:none;background:none;color:inherit}
+button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+
+/* ============ 原型導覽列 ============ */
+.proto-nav{
+  display:flex;align-items:center;gap:4px;
+  padding:10px 20px;border-bottom:1px solid var(--line);
+  background:rgba(23,18,16,.9);position:sticky;top:0;z-index:50;backdrop-filter:blur(6px);
+}
+.proto-nav .brand{font-family:var(--serif);font-weight:900;font-size:15px;letter-spacing:.14em;color:var(--gold-pale);margin-right:16px}
+.proto-nav .brand small{display:block;font-family:var(--sans);font-weight:400;font-size:10px;letter-spacing:.3em;color:var(--ash-dim)}
+.proto-tab{
+  padding:7px 16px;border-radius:3px;font-size:13px;letter-spacing:.12em;color:var(--ash);
+  border:1px solid transparent;transition:.15s;
+}
+.proto-tab:hover{color:var(--paper)}
+.proto-tab.active{color:var(--gold-pale);border-color:var(--line);background:var(--panel)}
+.proto-hint{margin-left:auto;font-size:11px;color:var(--ash-dim);letter-spacing:.05em}
+
+.screen{display:none;max-width:1240px;margin:0 auto;padding:24px 20px 60px}
+.screen.active{display:block}
+
+/* ============ 通用元件 ============ */
+.eyebrow{font-size:11px;letter-spacing:.35em;color:var(--gold);margin-bottom:4px}
+h1.title{font-family:var(--serif);font-weight:900;font-size:26px;letter-spacing:.08em;margin-bottom:2px}
+.subtitle{color:var(--ash);font-size:13px;margin-bottom:22px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:6px}
+.divider-v{width:1px;background:var(--line-soft)}
+
+.badge-id{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:22px;height:22px;border-radius:50%;font-family:var(--serif);font-weight:700;font-size:12px;
+  border:1px solid;flex:none;
+}
+.id-天{color:var(--gold);border-color:var(--gold);background:rgba(212,162,78,.1)}
+.id-地{color:var(--earth);border-color:var(--earth);background:rgba(156,107,63,.12)}
+.id-人{color:var(--cinnabar-hi);border-color:var(--cinnabar);background:rgba(201,55,44,.12)}
+.id-鬼{color:var(--yin);border-color:var(--yin);background:rgba(111,163,168,.1)}
+.id-未知{color:var(--ash-dim);border-color:var(--ash-dim);background:transparent}
+
+.bar{position:relative;height:9px;background:#120d0a;border:1px solid var(--line-soft);border-radius:2px;overflow:hidden}
+.bar>i{position:absolute;inset:0;transform-origin:left;transition:transform .5s cubic-bezier(.2,.8,.3,1)}
+.bar.hp>i{background:linear-gradient(90deg,#8c2620,var(--cinnabar-hi))}
+.bar.san>i{background:linear-gradient(90deg,#3d6a70,var(--yin))}
+.bar-label{display:flex;justify-content:space-between;font-size:11px;color:var(--ash);letter-spacing:.05em;margin-bottom:2px}
+.bar-label b{color:var(--paper);font-weight:500;font-variant-numeric:tabular-nums}
+
+.btn{
+  padding:10px 26px;border:1px solid var(--gold);color:var(--gold-pale);
+  letter-spacing:.25em;font-size:14px;border-radius:3px;transition:.15s;
+  background:linear-gradient(180deg,rgba(212,162,78,.12),rgba(212,162,78,.03));
+}
+.btn:hover{background:rgba(212,162,78,.22);box-shadow:0 0 18px rgba(212,162,78,.15)}
+.btn.danger{border-color:var(--cinnabar);color:#f3b9a8;background:rgba(201,55,44,.1)}
+.btn.ghost{border-color:var(--line);color:var(--ash)}
+
+/* ============ 一、戰前準備 ============ */
+.prep-layout{display:grid;grid-template-columns:300px 1fr;gap:18px}
+.prep-tabs{display:flex;border-bottom:1px solid var(--line)}
+.prep-tab{
+  flex:1;padding:11px 0;text-align:center;letter-spacing:.3em;font-size:14px;color:var(--ash);
+  border-bottom:2px solid transparent;margin-bottom:-1px;transition:.15s;font-family:var(--serif);font-weight:700;
+}
+.prep-tab.active{color:var(--gold-pale);border-bottom-color:var(--gold)}
+.prep-body{padding:18px}
+.prep-pane{display:none}
+.prep-pane.active{display:block}
+
+/* 主角摘要卡 */
+.hero-card{padding:18px}
+.hero-card .name{font-family:var(--serif);font-weight:900;font-size:20px;letter-spacing:.1em;display:flex;align-items:center;gap:8px}
+.hero-card .name .badge-id{width:24px;height:24px}
+.stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px 10px;margin-top:12px}
+.stat-grid .s{display:flex;justify-content:space-between;font-size:12px;color:var(--ash);border-bottom:1px dashed var(--line-soft);padding:2px 0}
+.stat-grid .s b{color:var(--paper);font-weight:500;font-variant-numeric:tabular-nums}
+.stat-grid .s b .buff{color:var(--gold);font-size:11px}
+.hero-vitals{margin-top:14px;display:flex;flex-direction:column;gap:8px}
+
+/* 隊友卡 */
+.mate-list{display:flex;flex-direction:column;gap:10px}
+.mate-card{display:flex;gap:12px;padding:12px 14px;align-items:center;border:1px solid var(--line);border-radius:5px;background:var(--panel2);transition:.15s;cursor:pointer}
+.mate-card:hover{border-color:var(--gold)}
+.mate-card.in{border-color:var(--gold);box-shadow:inset 3px 0 0 var(--gold)}
+.mate-card .avatar{width:46px;height:46px;border-radius:4px;flex:none;display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:20px;font-weight:900;border:1px solid var(--line)}
+.mate-card .info{flex:1;min-width:0}
+.mate-card .info .nm{display:flex;align-items:center;gap:6px;font-weight:700;font-size:15px}
+.mate-card .info .role{font-size:11px;color:var(--ash);letter-spacing:.05em}
+.mate-card .state{font-size:11px;letter-spacing:.2em;color:var(--ash-dim);border:1px solid var(--line);padding:3px 10px;border-radius:2px;flex:none}
+.mate-card.in .state{color:var(--gold-pale);border-color:var(--gold)}
+.mate-detail{margin-top:8px;font-size:12px;color:var(--ash);display:none;grid-column:1/-1}
+.mate-card.open .mate-detail{display:block}
+.squad-count{font-size:12px;color:var(--ash);margin-bottom:10px;letter-spacing:.1em}
+.squad-count b{color:var(--gold-pale)}
+
+/* 服裝 */
+.outfit-wrap{display:flex;gap:18px;align-items:flex-start}
+.outfit-fig{width:150px;height:200px;border:1px solid var(--line);border-radius:5px;background:
+  radial-gradient(ellipse at 50% 80%,rgba(201,55,44,.15),transparent 70%),var(--panel2);
+  display:flex;align-items:center;justify-content:center;flex:none}
+.outfit-info h3{font-family:var(--serif);font-size:18px;letter-spacing:.1em;margin-bottom:4px}
+.tag-lock{display:inline-block;font-size:11px;color:var(--ash-dim);border:1px solid var(--line);padding:2px 10px;border-radius:2px;letter-spacing:.15em;margin-bottom:10px}
+.outfit-buffs{display:flex;flex-direction:column;gap:5px;margin-top:8px}
+.outfit-buffs .b{font-size:13px;color:var(--ash)}
+.outfit-buffs .b b{color:var(--gold);font-weight:500}
+.note-line{margin-top:14px;font-size:12px;color:var(--ash-dim);border-left:2px solid var(--line);padding-left:10px;line-height:1.7}
+
+/* 道具 */
+.item-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px}
+.item-card{border:1px solid var(--line);border-radius:5px;padding:12px;background:var(--panel2);cursor:pointer;transition:.15s;position:relative}
+.item-card:hover{border-color:var(--gold)}
+.item-card.carry{border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold)}
+.item-card.carry::after{content:"攜帶";position:absolute;top:8px;right:8px;font-size:10px;color:var(--ink);background:var(--gold);padding:1px 7px;border-radius:2px;letter-spacing:.15em}
+.item-card .inm{font-weight:700;font-size:14px}
+.item-card .icnt{font-size:11px;color:var(--ash-dim);margin-left:6px}
+.item-card .idesc{font-size:12px;color:var(--ash);margin-top:4px}
+.carry-count{font-size:12px;color:var(--ash);margin-bottom:10px;letter-spacing:.1em}
+.carry-count b{color:var(--gold-pale)}
+
+/* 靈術 */
+.spell-list{display:flex;flex-direction:column;gap:10px}
+.spell-row{display:flex;gap:14px;align-items:center;border:1px solid var(--line);border-radius:5px;padding:12px 16px;background:var(--panel2)}
+.spell-row .glyph{width:40px;height:40px;flex:none;border:1px solid var(--cinnabar);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-weight:900;color:var(--cinnabar-hi);font-size:17px;background:rgba(201,55,44,.07)}
+.spell-row .sinfo{flex:1}
+.spell-row .snm{font-weight:700;font-size:15px;letter-spacing:.05em}
+.spell-row .sdesc{font-size:12px;color:var(--ash);margin-top:2px}
+.spell-meta{display:flex;gap:14px;font-size:12px;color:var(--ash);flex:none;text-align:right}
+.spell-meta b{color:var(--yin);font-weight:500}
+.spell-meta .chk b{color:var(--gold)}
+
+.prep-footer{display:flex;justify-content:flex-end;align-items:center;gap:16px;margin-top:20px}
+.prep-footer .sum{font-size:12px;color:var(--ash);letter-spacing:.05em}
+
+/* ============ 二、戰鬥介面 ============ */
+.battle-stage{
+  position:relative;border:1px solid var(--line);border-radius:8px;overflow:hidden;
+  background:
+    radial-gradient(ellipse 70% 55% at 50% 30%, rgba(201,55,44,.10), transparent 65%),
+    linear-gradient(180deg,#100c0a 0%,#1a130e 55%,#241a12 100%);
+  min-height:640px;display:flex;flex-direction:column;
+}
+/* 頂列 */
+.battle-top{display:flex;align-items:center;padding:12px 18px;gap:14px;border-bottom:1px solid rgba(61,47,32,.6)}
+.round-chip{font-family:var(--serif);font-weight:700;letter-spacing:.2em;font-size:13px;color:var(--gold-pale);border:1px solid var(--gold);padding:4px 14px;border-radius:2px;background:rgba(212,162,78,.06)}
+.battle-top .loc{font-size:12px;color:var(--ash-dim);letter-spacing:.2em}
+.battle-top .auto-flag{margin-left:auto;font-size:11px;letter-spacing:.25em;color:var(--cinnabar-hi);display:none}
+.battle-top .auto-flag.on{display:block;animation:blink 1.4s infinite}
+@keyframes blink{50%{opacity:.35}}
+
+/* 敵方區 */
+.enemy-zone{position:relative;flex:1;display:flex;align-items:center;justify-content:center;min-height:250px}
+.enemy-row{display:flex;gap:44px;align-items:flex-end;justify-content:center}
+.enemy-zone-hint{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);font-size:11px;color:var(--ash-dim);letter-spacing:.1em;white-space:nowrap}
+.enemy-unit{position:relative;text-align:center;cursor:default;transition:.2s}
+.enemy-unit.dead{opacity:.25;filter:grayscale(.8)}
+.enemy-unit.targetable{cursor:pointer}
+.enemy-unit.targetable .enemy-sprite{filter:drop-shadow(0 0 14px rgba(232,96,63,.7));animation:pulse 1s infinite}
+@keyframes pulse{50%{transform:scale(1.03)}}
+.enemy-sprite{margin:0 auto;transition:.15s}
+.enemy-unit.hit .enemy-sprite{animation:shake .35s}
+@keyframes shake{20%{transform:translateX(-9px)}50%{transform:translateX(7px)}80%{transform:translateX(-4px)}}
+.enemy-plate{margin-top:6px;display:inline-flex;flex-direction:column;align-items:center;gap:5px}
+.enemy-plate .enm{font-family:var(--serif);font-weight:900;font-size:17px;letter-spacing:.15em;display:flex;align-items:center;gap:8px}
+.enemy-cond{display:flex;align-items:center;gap:8px}
+.cond-pips{display:flex;gap:3px}
+.cond-pips i{width:16px;height:5px;background:var(--cinnabar);border-radius:1px;transition:.3s}
+.cond-pips i.off{background:#3a2620}
+.cond-text{font-size:12px;color:var(--ash);letter-spacing:.2em}
+.enemy-hint{font-size:11px;color:var(--ash-dim);letter-spacing:.1em;margin-top:2px}
+.target-banner{position:absolute;top:14px;left:50%;transform:translateX(-50%);font-size:13px;letter-spacing:.4em;color:var(--gold-pale);border:1px solid var(--gold);background:rgba(23,18,16,.85);padding:6px 22px 6px 26px;border-radius:2px;display:none;z-index:5}
+.target-banner.show{display:block;animation:fadein .2s}
+@keyframes fadein{from{opacity:0;transform:translateX(-50%) translateY(-6px)}}
+
+/* 浮動傷害數字 */
+.float-dmg{position:absolute;font-family:var(--serif);font-weight:900;font-size:30px;color:var(--gold-pale);text-shadow:0 0 10px rgba(212,162,78,.6);pointer-events:none;animation:floatup 1s forwards;z-index:6}
+.float-dmg.crit{color:var(--cinnabar-hi);font-size:38px}
+.float-dmg.miss{color:var(--ash-dim);font-size:20px;letter-spacing:.2em}
+.float-dmg.heal{color:var(--ok)}
+@keyframes floatup{0%{opacity:0;transform:translateY(6px)}15%{opacity:1}100%{opacity:0;transform:translateY(-44px)}}
+
+/* 下半：日誌 + 我方 + 指令 */
+.battle-bottom{display:grid;grid-template-columns:320px 1fr;border-top:1px solid rgba(61,47,32,.6)}
+.log-panel{border-right:1px solid rgba(61,47,32,.6);display:flex;flex-direction:column;max-height:300px}
+.log-head{font-size:11px;letter-spacing:.35em;color:var(--ash-dim);padding:9px 16px;border-bottom:1px solid var(--line-soft)}
+.log-body{flex:1;overflow-y:auto;padding:8px 16px;display:flex;flex-direction:column;gap:5px;font-size:12.5px;scrollbar-width:thin}
+.log-body .l{color:var(--ash);animation:fadein .25s}
+.log-body .l.me{color:var(--paper)}
+.log-body .l .tier{font-family:var(--serif);font-weight:700;letter-spacing:.1em}
+.log-body .l .t-crit{color:var(--gold)}
+.log-body .l .t-ok{color:var(--cinnabar-hi)}
+.log-body .l .t-fail{color:var(--ash-dim)}
+.log-body .l .t-fumble{color:var(--yin)}
+.log-body .l .dmg{color:var(--gold-pale);font-variant-numeric:tabular-nums}
+.log-body .l.sys{color:var(--ash-dim);font-size:11.5px;letter-spacing:.1em}
+
+.party-command{display:flex;flex-direction:column}
+.party-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:12px 16px}
+.pc-card{border:1px solid var(--line);border-radius:5px;background:rgba(34,26,20,.85);padding:10px 12px;transition:.15s;position:relative}
+.pc-card .top{display:flex;align-items:center;gap:7px;margin-bottom:7px}
+.pc-card .top .nm{font-weight:700;font-size:14px;letter-spacing:.05em}
+.pc-card .top .you{font-size:10px;color:var(--ink);background:var(--gold);padding:0 6px;border-radius:2px;letter-spacing:.1em}
+.pc-card .stat-link{position:absolute;top:9px;right:10px;font-size:11px;color:var(--ash-dim);letter-spacing:.1em}
+.pc-card .stat-link:hover{color:var(--gold)}
+.pc-card .bars{display:flex;flex-direction:column;gap:6px}
+.pc-card.targetable{cursor:pointer;border-color:var(--ok);box-shadow:0 0 12px rgba(143,174,106,.25);animation:pulse 1s infinite}
+.pc-card.down{opacity:.4}
+.pc-card.acted::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--gold);border-radius:5px 0 0 5px}
+
+/* 指令列 */
+.cmd-bar{display:flex;gap:8px;padding:0 16px 16px;align-items:stretch}
+.cmd-btn{
+  flex:1;padding:13px 0;text-align:center;font-family:var(--serif);font-weight:700;font-size:16px;letter-spacing:.35em;
+  border:1px solid var(--line);border-radius:4px;color:var(--paper);background:linear-gradient(180deg,var(--panel2),var(--panel));
+  transition:.15s;text-indent:.35em;
+}
+.cmd-btn small{display:block;font-family:var(--sans);font-weight:400;font-size:10px;letter-spacing:.15em;color:var(--ash-dim);text-indent:.15em;margin-top:1px}
+.cmd-btn:hover:not(:disabled){border-color:var(--gold);color:var(--gold-pale)}
+.cmd-btn:disabled{opacity:.35;cursor:not-allowed}
+.cmd-btn.on{border-color:var(--cinnabar);color:var(--cinnabar-hi)}
+/* 子選單 */
+.submenu{padding:0 16px 12px;display:none}
+.submenu.show{display:flex;gap:8px;flex-wrap:wrap;animation:fadein .15s}
+.sub-item{border:1px solid var(--line);border-radius:4px;padding:8px 14px;background:var(--panel2);transition:.15s;text-align:left}
+.sub-item:hover:not(:disabled){border-color:var(--gold)}
+.sub-item:disabled{opacity:.4;cursor:not-allowed}
+.sub-item .n{font-weight:700;font-size:13px}
+.sub-item .m{font-size:11px;color:var(--ash)}
+.sub-item .m b{color:var(--yin);font-weight:500}
+.sub-cancel{border:1px dashed var(--line);color:var(--ash-dim);padding:8px 14px;border-radius:4px;font-size:12px;letter-spacing:.2em}
+
+/* ============ 擲筊 Overlay（招牌元素） ============ */
+.overlay{position:fixed;inset:0;background:rgba(12,9,7,.88);backdrop-filter:blur(3px);display:none;align-items:center;justify-content:center;z-index:100}
+.overlay.show{display:flex}
+.poe-box{text-align:center;position:relative;width:min(560px,92vw)}
+.poe-title{font-size:12px;letter-spacing:.5em;color:var(--ash);margin-bottom:6px;text-indent:.5em}
+.poe-check{font-family:var(--serif);font-weight:700;font-size:20px;letter-spacing:.15em;color:var(--gold-pale);margin-bottom:34px}
+.poe-floor{position:relative;height:190px;display:flex;align-items:center;justify-content:center;gap:34px}
+.jiao{width:92px;height:92px;position:relative;transform-style:preserve-3d}
+.jiao svg{width:100%;height:100%;filter:drop-shadow(0 6px 8px rgba(0,0,0,.55))}
+.tossing .jiao{animation:toss 1.15s cubic-bezier(.3,.6,.4,1) forwards}
+.tossing .jiao.j2{animation-delay:.08s}
+@keyframes toss{
+  0%{transform:translateY(30px) rotate(0) scale(.6);opacity:0}
+  12%{opacity:1}
+  40%{transform:translateY(-105px) rotate(300deg) scale(1.06)}
+  75%{transform:translateY(8px) rotate(600deg) scale(1)}
+  87%{transform:translateY(-14px) rotate(660deg)}
+  100%{transform:translateY(0) rotate(720deg)}
+}
+.poe-result{margin-top:26px;opacity:0;transition:opacity .3s}
+.poe-result.show{opacity:1}
+.poe-tier{font-family:var(--serif);font-weight:900;font-size:46px;letter-spacing:.3em;text-indent:.3em}
+.poe-tier.crit{color:var(--gold);text-shadow:0 0 34px rgba(212,162,78,.8)}
+.poe-tier.ok{color:var(--cinnabar-hi);text-shadow:0 0 26px rgba(201,55,44,.55)}
+.poe-tier.fail{color:var(--ash);text-shadow:none}
+.poe-tier.fumble{color:var(--yin);text-shadow:0 0 30px rgba(111,163,168,.6)}
+.poe-sub{font-size:13px;color:var(--ash);letter-spacing:.25em;margin-top:8px;text-indent:.25em}
+.smoke{position:absolute;bottom:0;left:50%;width:2px;height:70px;background:linear-gradient(180deg,transparent,rgba(167,156,139,.25));filter:blur(2px);animation:smoke 4s infinite}
+@keyframes smoke{0%{transform:translateX(-50%) scaleY(.4);opacity:0}40%{opacity:1}100%{transform:translateX(-46%) scaleY(1.2);opacity:0}}
+
+/* ============ QTE Overlay ============ */
+.qte-box{text-align:center;width:min(600px,92vw)}
+.qte-label{font-size:12px;letter-spacing:.5em;color:var(--ash);text-indent:.5em;margin-bottom:4px}
+.qte-name{font-family:var(--serif);font-weight:900;font-size:26px;letter-spacing:.25em;color:var(--gold-pale);margin-bottom:30px}
+.qte-track{position:relative;height:44px;border:2px solid var(--line);border-radius:22px;background:#14100c;overflow:hidden;transition:border-color .1s,box-shadow .1s}
+.qte-track.in-zone{border-color:var(--cinnabar-hi);box-shadow:0 0 24px rgba(232,96,63,.55)}
+.qte-zone{position:absolute;top:0;bottom:0;background:rgba(201,55,44,.4);border-left:2px solid var(--cinnabar-hi);border-right:2px solid var(--cinnabar-hi)}
+.qte-zone.perfect{background:rgba(212,162,78,.6);border-color:var(--gold)}
+.qte-needle{position:absolute;top:-6px;bottom:-6px;left:0;width:5px;background:var(--gold-pale);box-shadow:0 0 14px rgba(241,220,168,1);border-radius:3px;will-change:transform}
+#qte-overlay{backdrop-filter:none;background:rgba(12,9,7,.94)}
+.qte-ready{margin-top:14px;font-family:var(--serif);font-weight:900;font-size:26px;letter-spacing:.4em;text-indent:.4em;color:var(--ash);min-height:38px}
+.qte-ready.go{color:var(--cinnabar-hi);animation:hitpulse .5s infinite}
+@keyframes hitpulse{50%{transform:scale(1.15)}}
+.qte-strike{
+  margin-top:26px;width:150px;height:150px;border-radius:50%;
+  border:3px solid var(--line);background:radial-gradient(circle at 50% 38%,var(--panel2),var(--panel));
+  font-family:var(--serif);font-weight:900;font-size:24px;letter-spacing:.3em;text-indent:.3em;color:var(--ash);
+  transition:transform .06s, border-color .1s, box-shadow .1s, color .1s;
+  touch-action:manipulation; user-select:none;
+}
+.qte-strike:active{transform:scale(.93)}
+.qte-strike.armed{border-color:var(--gold);color:var(--gold-pale)}
+.qte-strike.go{border-color:var(--cinnabar-hi);color:#fff;background:radial-gradient(circle at 50% 38%,rgba(201,55,44,.5),var(--panel));box-shadow:0 0 40px rgba(232,96,63,.7);animation:hitpulse .5s infinite}
+.qte-action{margin-top:26px;font-size:13px;color:var(--ash);letter-spacing:.2em}
+.qte-action b{color:var(--gold-pale);border:1px solid var(--gold);padding:2px 14px;border-radius:3px;margin:0 6px;font-weight:500}
+.qte-verdict{margin-top:18px;font-family:var(--serif);font-weight:900;font-size:34px;letter-spacing:.35em;text-indent:.35em;opacity:0;transition:.2s}
+.qte-verdict.show{opacity:1}
+
+/* ============ 戰鬥結束 Overlay ============ */
+.end-box{text-align:center}
+.end-title{font-family:var(--serif);font-weight:900;font-size:52px;letter-spacing:.5em;text-indent:.5em;color:var(--gold-pale);text-shadow:0 0 40px rgba(212,162,78,.4);margin-bottom:14px}
+.end-title.lose{color:var(--yin);text-shadow:0 0 40px rgba(111,163,168,.4)}
+.end-sub{color:var(--ash);letter-spacing:.2em;margin-bottom:30px}
+
+/* ============ 屬性檢視 Overlay ============ */
+.sheet-box{width:min(460px,92vw);background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:26px 30px;text-align:left}
+.sheet-box h3{font-family:var(--serif);font-weight:900;font-size:20px;letter-spacing:.15em;display:flex;align-items:center;gap:10px;margin-bottom:4px}
+.sheet-box .role{font-size:12px;color:var(--ash);margin-bottom:16px}
+.sheet-close{position:absolute;top:14px;right:18px;font-size:20px;color:var(--ash-dim)}
+.sheet-close:hover{color:var(--paper)}
+
+/* ============ 三、設計說明 ============ */
+.notes{max-width:860px}
+.notes h2{font-family:var(--serif);font-weight:900;font-size:18px;letter-spacing:.12em;color:var(--gold-pale);margin:30px 0 10px;padding-left:12px;border-left:3px solid var(--cinnabar)}
+.notes p,.notes li{color:var(--ash);font-size:13.5px;line-height:1.9}
+.notes ul{padding-left:22px;margin-top:4px}
+.notes b{color:var(--paper);font-weight:500}
+.notes .spec{color:var(--gold);font-size:12px;letter-spacing:.05em}
+
+/* ============ ④ 數值測試 ============ */
+.tune-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:14px;margin-bottom:18px}
+.tune-card{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:14px 16px}
+.tune-card h3{font-family:var(--serif);font-weight:700;font-size:14px;letter-spacing:.15em;color:var(--gold-pale);margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--line-soft)}
+.tune-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:4px 0;border-bottom:1px dashed var(--line-soft);font-size:13px;color:var(--ash)}
+.tune-row:last-child{border-bottom:none}
+.tune-row input{width:82px;background:#14100c;border:1px solid var(--line);color:var(--paper);padding:4px 8px;border-radius:3px;font-family:var(--sans);font-size:13px;text-align:right}
+.tune-row input:focus{border-color:var(--gold);outline:none}
+.tune-row input[type=text]{width:118px;text-align:left}
+.tune-row select{width:82px;background:#14100c;border:1px solid var(--line);color:var(--paper);padding:4px 6px;border-radius:3px;font-family:var(--sans);font-size:13px}
+.tune-row select:focus{border-color:var(--gold);outline:none}
+.ent-head{display:flex;justify-content:space-between;align-items:center;margin:26px 0 12px;border-left:3px solid var(--cinnabar);padding-left:12px}
+.ent-head h2{font-family:var(--serif);font-weight:900;font-size:16px;letter-spacing:.12em;color:var(--gold-pale)}
+.btn.sm{padding:6px 16px;font-size:12px;letter-spacing:.15em}
+.ent-card{position:relative}
+.ent-del{position:absolute;top:10px;right:12px;font-size:11px;color:var(--ash-dim);border:1px solid var(--line);padding:2px 10px;border-radius:2px;letter-spacing:.15em;transition:.15s}
+.ent-del:hover{color:#f3b9a8;border-color:var(--cinnabar)}
+.ent-derived{font-size:11.5px;color:var(--ash-dim);margin-top:8px;line-height:1.6;border-top:1px dashed var(--line-soft);padding-top:6px}
+.roster-row{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px dashed var(--line-soft);font-size:13px}
+.roster-row .no{width:22px;color:var(--gold);font-family:var(--serif);font-weight:700}
+.roster-row .rn{flex:1;display:flex;align-items:center;gap:7px}
+.roster-btn{font-size:11px;border:1px solid var(--line);color:var(--ash);padding:2px 9px;border-radius:2px;transition:.12s}
+.roster-btn:hover:not(:disabled){border-color:var(--gold);color:var(--gold-pale)}
+.roster-btn:disabled{opacity:.3;cursor:not-allowed}
+.roster-add{display:flex;gap:8px;margin-top:12px;align-items:center}
+.roster-add select{flex:1;background:#14100c;border:1px solid var(--line);color:var(--paper);padding:6px 8px;border-radius:3px;font-family:var(--sans);font-size:13px}
+.roster-empty{color:var(--ash-dim);font-size:12px;padding:10px 0;letter-spacing:.05em}
+.tune-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:18px}
+.tune-actions .hint{font-size:12px;color:var(--ash-dim);letter-spacing:.05em}
+.sim-box{padding:16px 20px}
+.sim-box h3{font-family:var(--serif);font-weight:700;font-size:15px;letter-spacing:.15em;color:var(--gold-pale);margin-bottom:10px}
+.sim-table{width:100%;border-collapse:collapse;font-size:13px}
+.sim-table td{padding:6px 8px;border-bottom:1px dashed var(--line-soft);color:var(--ash)}
+.sim-table td:last-child{text-align:right;color:var(--paper);font-variant-numeric:tabular-nums}
+.sim-table td .pct-bar{display:inline-block;height:8px;background:linear-gradient(90deg,#8c2620,var(--cinnabar-hi));border-radius:2px;vertical-align:middle;margin-right:8px}
+.sim-note{font-size:12px;color:var(--ash-dim);margin-top:10px;line-height:1.7}
+
+/* toast */
+.toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%);background:var(--panel);border:1px solid var(--gold);color:var(--gold-pale);padding:9px 24px;border-radius:4px;font-size:13px;letter-spacing:.15em;z-index:200;display:none;animation:fadein .2s}
+.toast.show{display:block}
+
+@media (max-width:900px){
+  .prep-layout{grid-template-columns:1fr}
+  .battle-bottom{grid-template-columns:1fr}
+  .log-panel{border-right:none;border-bottom:1px solid var(--line-soft);max-height:160px}
+  .party-row{grid-template-columns:repeat(2,1fr)}
+  .cmd-btn{letter-spacing:.1em;text-indent:.1em;font-size:14px}
+}
+</style>
+</head>
+<body>
+
+<!-- 原型導覽 -->
+<nav class="proto-nav">
+  <div class="brand">戰鬥系統 UI 原型<small>BATTLE UI PROTOTYPE · v1</small></div>
+  <button class="proto-tab active" data-screen="prep">① 戰前準備</button>
+  <button class="proto-tab" data-screen="battle">② 戰鬥介面</button>
+  <button class="proto-tab" data-screen="notes">③ 設計說明</button>
+  <button class="proto-tab" data-screen="tune">④ 數值測試</button>
+  <div class="proto-hint">可互動原型：完整流程可從「戰前準備 → 出戰」走一遍</div>
+</nav>
+
+<!-- ============================================================ -->
+<!-- ① 戰前準備 -->
+<!-- ============================================================ -->
+<section class="screen active" id="screen-prep">
+  <div class="eyebrow">戰前準備</div>
+  <h1 class="title">整備 · 測試關卡入口</h1>
+  <div class="subtitle">確認隊伍、服裝、攜帶道具與靈術後出戰。服裝隨劇情強制換裝，此處僅供檢視。</div>
+
+  <div class="prep-layout">
+    <!-- 左：主角摘要 -->
+    <div class="card hero-card">
+      <div class="name"><span class="badge-id id-人">人</span>玩家角色<span style="font-size:11px;color:var(--ash-dim);font-family:var(--sans);font-weight:400;letter-spacing:.2em;margin-left:auto">主角</span></div>
+      <div class="hero-vitals">
+        <div>
+          <div class="bar-label"><span>血量 HP</span><b>70 / 70</b></div>
+          <div class="bar hp"><i style="transform:scaleX(1)"></i></div>
+        </div>
+        <div>
+          <div class="bar-label"><span>理智 SAN</span><b>12 / 12</b></div>
+          <div class="bar san"><i style="transform:scaleX(1)"></i></div>
+        </div>
+      </div>
+      <div class="stat-grid" id="hero-stats"></div>
+      <div class="note-line">HP 不會自然回復，僅能以藥品恢復（上限 = 體魄 × 5）。<br>SAN 僅能透過特定劇情恢復（上限 = 意志）。</div>
+    </div>
+
+    <!-- 右：四分頁 -->
+    <div class="card">
+      <div class="prep-tabs">
+        <button class="prep-tab active" data-pane="squad">隊伍</button>
+        <button class="prep-tab" data-pane="outfit">服裝</button>
+        <button class="prep-tab" data-pane="items">道具</button>
+        <button class="prep-tab" data-pane="spells">靈術</button>
+      </div>
+      <div class="prep-body">
+
+        <!-- 隊伍 -->
+        <div class="prep-pane active" id="pane-squad">
+          <div class="squad-count">同時在場隊友 <b id="squad-n">2</b> / 3 · 點擊卡片切換出戰，點「檢視」展開數值</div>
+          <div class="mate-list" id="mate-list"></div>
+          <div class="note-line">入隊的隊友於戰鬥中自動進行武藝／靈術判定並輔助攻擊，無法直接操控；隊友以 QTE 折算比例計算加成（流程圖為玩家 QTE 之一半，可於「數值測試」頁調整）。</div>
+        </div>
+
+        <!-- 服裝 -->
+        <div class="prep-pane" id="pane-outfit">
+          <div class="outfit-wrap">
+            <div class="outfit-fig">
+              <svg width="90" height="150" viewBox="0 0 90 150" fill="none">
+                <ellipse cx="45" cy="24" rx="14" ry="16" fill="#3a2c1e"/>
+                <path d="M25 46 L65 46 L74 130 L58 138 L45 132 L32 138 L16 130 Z" fill="#7a2620" stroke="#c9372c" stroke-width="1.5"/>
+                <path d="M45 46 L45 130" stroke="#d4a24e" stroke-width="1" stroke-dasharray="3 4"/>
+                <circle cx="45" cy="70" r="6" fill="none" stroke="#d4a24e" stroke-width="1"/>
+              </svg>
+            </div>
+            <div class="outfit-info" id="outfit-info"></div>
+          </div>
+        </div>
+
+        <!-- 道具 -->
+        <div class="prep-pane" id="pane-items">
+          <div class="carry-count">攜帶欄 <b id="carry-n">3</b> / 6 · 點擊道具加入／移出攜帶欄，戰鬥中僅能使用已攜帶道具</div>
+          <div class="item-grid" id="item-grid"></div>
+        </div>
+
+        <!-- 靈術 -->
+        <div class="prep-pane" id="pane-spells">
+          <div class="spell-list" id="spell-list"></div>
+          <div class="note-line">施放靈術需通過靈術數值檢定（問杯），並扣除對應理智。理智不足時無法施放。</div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="prep-footer">
+    <span class="sum" id="prep-sum"></span>
+    <button class="btn" id="btn-go">出　戰</button>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- ② 戰鬥介面 -->
+<!-- ============================================================ -->
+<section class="screen" id="screen-battle">
+  <div class="battle-stage">
+    <div class="battle-top">
+      <span class="round-chip">第 <span id="round-n">1</span> 回合</span>
+      <span class="loc">測試場景 · 標準遭遇</span>
+      <span class="auto-flag" id="auto-flag">自動戰鬥中 · 點擊「自動」解除</span>
+    </div>
+
+    <div class="enemy-zone" id="enemy-zone">
+      <div class="target-banner" id="target-banner">選擇目標</div>
+      <div class="enemy-row" id="enemy-row"></div>
+      <div class="enemy-zone-hint">敵方屬性不可檢視 · 僅顯示傷勢概況</div>
+    </div>
+
+    <div class="battle-bottom">
+      <!-- 戰鬥日誌 -->
+      <div class="log-panel">
+        <div class="log-head">戰鬥紀錄</div>
+        <div class="log-body" id="log-body"></div>
+      </div>
+
+      <!-- 我方 + 指令 -->
+      <div class="party-command">
+        <div class="party-row" id="party-row"></div>
+
+        <div class="submenu" id="submenu"></div>
+
+        <div class="cmd-bar" id="cmd-bar">
+          <button class="cmd-btn" data-cmd="art">武藝<small>WUYI</small></button>
+          <button class="cmd-btn" data-cmd="spell">靈術<small>LINGSHU</small></button>
+          <button class="cmd-btn" data-cmd="item">道具<small>ITEM</small></button>
+          <button class="cmd-btn" data-cmd="flee">逃跑<small>FLEE</small></button>
+          <button class="cmd-btn" data-cmd="auto">自動<small>AUTO</small></button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- ③ 設計說明 -->
+<!-- ============================================================ -->
+<section class="screen" id="screen-notes">
+  <div class="notes">
+    <div class="eyebrow">設計說明</div>
+    <h1 class="title">UX 決策與規格對照</h1>
+    <div class="subtitle">給團隊看的重點摘要，對照《戰鬥系統》文件逐項落地。</div>
+
+    <h2>整體節奏設計</h2>
+    <p>玩家一回合的體感節奏設計為：<b>選指令 → 選目標 → 擲筊儀式（全螢幕）→ QTE → 結算</b>。擲筊做成全螢幕儀式化演出，是整套戰鬥的記憶點——它同時解決「界面不顯示具體數值，只顯示結果等級」的規格要求：畫面上永遠只出現叠杯／聖杯／哭杯／立杯四種結果，不出現 1–20 的數字。</p>
+
+    <h2>資訊揭露層級（規格 3 節）</h2>
+    <ul>
+      <li><b>玩家</b>：完整顯示問杯結果等級 + 傷害結算。<span class="spec">→「僅顯示玩家自己的問杯結果」</span></li>
+      <li><b>隊友／敵方</b>：日誌只出現一行結算（例：隊友A的攻擊 → 造成 14 傷害），不演出問杯。<span class="spec">→「隊友/敵方直接體現傷害結算」，維持節奏</span></li>
+      <li><b>敵方屬性</b>：不顯示 HP 數值，改用五格傷勢燈 + 傷勢文字（無傷／輕傷／重傷／瀕死），玩家有回饋但拿不到數據。<span class="spec">→「不可查看敵方屬性」</span></li>
+      <li><b>身份克制</b>：敵我名牌旁常駐天／地／人／鬼圓章。進入戰鬥即揭曉並記錄（開戰 toast 提示「敵人A身份已記錄」），呼應社交頁解鎖條件 2。</li>
+    </ul>
+
+    <h2>戰前準備（規格 3 節「戰前界面」）</h2>
+    <ul>
+      <li><b>隊伍</b>：隊友A／隊友B／隊友C 三張卡，點擊切換出戰（上限 3），卡上可展開檢視數值。未入隊劇情的 NPC 顯示鎖定態。</li>
+      <li><b>服裝</b>：因「隨劇情強制換裝、不可自行替換」，服裝頁刻意做成<b>唯讀檢視</b>而非選擇器——顯示當前裝束、來源章節與加成，避免玩家誤以為能換裝。</li>
+      <li><b>道具</b>：庫存 → 攜帶欄（6 格）二層結構，戰鬥中僅能用已攜帶道具，把「帶什麼」變成戰前決策。</li>
+      <li><b>靈術</b>：唯讀清單，每條列出 SAN 消耗與檢定屬性，讓玩家出戰前能估算理智預算。</li>
+    </ul>
+
+    <h2>SAN 作為資源的 UI 表達</h2>
+    <p>SAN 條使用陰青色與 HP 朱紅區隔；靈術子選單上每個技能直接標示 <b>SAN −n</b>，理智不足的技能按鈕反灰並註明原因。因 SAN 幾乎不可回復，介面上刻意讓消耗「很貴」的感覺可見。</p>
+
+    <h2>QTE</h2>
+    <p>原型採計時軌道（點擊／空白鍵停針）：金色窄區 = 完美、朱紅寬區 = 命中、其餘 = 失誤，對應「按中與沒按中的效果」。實作時 QTE 形式依敵人類型替換（規格 2-C），軌道版可作為通用 fallback。加成倍率、持續回合等數值以《戰鬥系統運算文件》為準，原型內僅為示意值。</p>
+
+    <h2>逃跑與自動戰鬥</h2>
+    <ul>
+      <li><b>逃跑</b>走同一套問杯儀式（檢定身法），成功即脫離戰鬥，維持機制一致性。</li>
+      <li><b>自動戰鬥</b>為切換態：頂列出現紅色「自動戰鬥中」呼吸燈，再點一次解除。自動模式下 QTE 改為隨機模擬檢定（機率可於數值測試頁調整）並縮短演出，供刷怪／低壓力場景使用。</li>
+    </ul>
+
+    <h2>待接運算文件的參數（原型內為佔位值）</h2>
+    <ul>
+      <li>QTE 加成倍率、隊友 QTE 折算比例的實際換算</li>
+      <li>叠杯／立杯的正負面額外效果內容</li>
+      <li>閃避、命中公式；克制傷害成長曲線</li>
+      <li>敵方 AI 目標選擇權重</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- ④ 數值測試 -->
+<!-- ============================================================ -->
+<section class="screen" id="screen-tune">
+  <div class="eyebrow">數值測試</div>
+  <h1 class="title">企劃調參台</h1>
+  <div class="subtitle">結算邏輯已對齊《戰鬥流程圖》。改完按「套用設定」，於下一場戰鬥生效；「批次模擬」可不看演出直接跑上千場統計勝率。</div>
+
+  <div class="tune-grid" id="tune-grid"></div>
+
+  <div class="ent-head"><h2>角色（隊友）</h2><button class="btn ghost sm" id="add-mate">＋ 新增角色</button></div>
+  <div class="tune-grid" id="ent-mates"></div>
+
+  <div class="ent-head"><h2>關卡編成 · 出戰序列（清單順序 = 敵方行動順序，上限 6 隻）</h2></div>
+  <div class="tune-grid" style="grid-template-columns:minmax(270px,480px)">
+    <div class="tune-card" id="enc-roster"></div>
+  </div>
+
+  <div class="ent-head"><h2>關卡事件（於指定回合開始時觸發，可同回合多個）</h2><button class="btn ghost sm" id="add-event">＋ 新增事件</button></div>
+  <div class="tune-grid" id="enc-events"></div>
+
+  <div class="ent-head"><h2>怪物庫（僅定義數值；出戰組合請至上方「關卡編成」設定）</h2><button class="btn ghost sm" id="add-monster">＋ 新增怪物</button></div>
+  <div class="tune-grid" id="ent-monsters"></div>
+
+  <div class="ent-head"><h2>靈術（施放時檢定並扣 SAN，效果實際作用於戰鬥）</h2><button class="btn ghost sm" id="add-spell">＋ 新增靈術</button></div>
+  <div class="tune-grid" id="ent-spells"></div>
+
+  <div class="ent-head"><h2>服裝（劇情強制換裝——此處「著裝」代表當前劇情裝束）</h2><button class="btn ghost sm" id="add-outfit">＋ 新增服裝</button></div>
+  <div class="tune-grid" id="ent-outfits"></div>
+
+  <div class="ent-head"><h2>道具</h2><button class="btn ghost sm" id="add-item">＋ 新增道具</button></div>
+  <div class="tune-grid" id="ent-items"></div>
+
+  <div class="tune-actions">
+    <button class="btn" id="btn-apply">套用設定</button>
+    <button class="btn ghost" id="btn-reset-cfg">恢復預設</button>
+    <button class="btn danger" id="btn-sim">批次模擬 1000 場</button>
+    <button class="btn ghost" id="btn-export">匯出參數 JSON</button>
+    <button class="btn ghost" id="btn-import">匯入參數 JSON</button>
+    <input type="file" id="import-file" accept="application/json,.json" style="display:none">
+    <span class="hint" id="apply-hint">修改後尚未套用</span>
+  </div>
+
+  <div class="card sim-box" id="sim-box" style="display:none">
+    <h3>模擬結果</h3>
+    <table class="sim-table" id="sim-table"></table>
+    <div class="sim-note">模擬採用「自動戰鬥」策略：玩家每回合以武藝行動，QTE 依上方機率隨機抽樣；先後手由開場輕捷判定決定；隊友依折算比例計算 QTE 加成；防守方輕捷四級判定（大成功全閃／成功半傷／失敗全傷／大失敗 ×倍率）。出戰序列與關卡事件（麻痺／全體傷害／增援／敵方回復）均已納入模擬。80 回合未分勝負計為「僵局」。</div>
+  </div>
+</section>
+
+<!-- ============ 擲筊 Overlay ============ -->
+<div class="overlay" id="poe-overlay">
+  <div class="poe-box">
+    <div class="smoke" style="left:20%"></div>
+    <div class="smoke" style="left:80%;animation-delay:2s"></div>
+    <div class="poe-title">問　杯</div>
+    <div class="poe-check" id="poe-check">武藝檢定</div>
+    <div class="poe-floor" id="poe-floor">
+      <div class="jiao j1" id="jiao1"></div>
+      <div class="jiao j2" id="jiao2"></div>
+    </div>
+    <div class="poe-result" id="poe-result">
+      <div class="poe-tier" id="poe-tier">聖杯</div>
+      <div class="poe-sub" id="poe-sub">神明應允 · 檢定成功</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ QTE Overlay ============ -->
+<div class="overlay" id="qte-overlay">
+  <div class="qte-box">
+    <div class="qte-label">追　擊</div>
+    <div class="qte-name" id="qte-name">基本攻擊</div>
+    <div class="qte-track" id="qte-track">
+      <div class="qte-zone" id="qte-zone-hit"></div>
+      <div class="qte-zone perfect" id="qte-zone-perfect"></div>
+      <div class="qte-needle" id="qte-needle"></div>
+    </div>
+    <div class="qte-action">指針進入 <b style="border-color:var(--cinnabar);color:var(--cinnabar-hi)">紅區</b> 時按下方大鈕（或點畫面任意處／空白鍵）· 金色窄區為完美</div>
+    <button class="qte-strike" id="qte-strike">拍　擊</button>
+    <div class="qte-ready" id="qte-ready">準　備</div>
+    <div class="qte-verdict" id="qte-verdict"></div>
+  </div>
+</div>
+
+<!-- ============ 結束 Overlay ============ -->
+<div class="overlay" id="end-overlay">
+  <div class="end-box">
+    <div class="end-title" id="end-title">討　伐</div>
+    <div class="end-sub" id="end-sub">敵人A已被擊破 · 身份「鬼」已記錄於社交頁</div>
+    <button class="btn" id="btn-restart">返回戰前準備</button>
+  </div>
+</div>
+
+<!-- ============ 屬性檢視 Overlay ============ -->
+<div class="overlay" id="sheet-overlay">
+  <div class="sheet-box" style="position:relative">
+    <button class="sheet-close" id="sheet-close" aria-label="關閉">×</button>
+    <h3 id="sheet-name"></h3>
+    <div class="role" id="sheet-role"></div>
+    <div class="hero-vitals" id="sheet-vitals" style="margin-bottom:14px"></div>
+    <div class="stat-grid" id="sheet-stats"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ================= 可調參數（企劃調參台） ================= */
+const CFG_DEFAULT = {
+  playerAtkMin:16, playerAtkMax:24,     // 玩家武藝基礎傷害
+  qtePerfect:1.5, qteHit:1.25,          // QTE 加成倍率
+  critMul:1.5,                          // 叠杯（大成功）倍率【暫定】
+  counterMul:1.3,                       // 克制倍率
+  evadeFumbleMul:1.5,                   // 防守方輕捷大失敗 → 承受 atk×此倍率（流程圖 =atk*1.5【暫定】）
+  fumbleSelfDmg:6,                      // 玩家立杯負面效果：反噬傷害（0 = 依流程圖不造成任何效果）
+  mateAtkMin:8, mateAtkMax:15,          // 隊友基礎傷害
+  mateQteRatio:0.5,                     // 隊友 QTE 折算比例（流程圖=一半；舊規格=0.7）
+  simQtePerfect:0.2, simQteHit:0.5,     // 自動戰鬥／批次模擬的 QTE 抽樣機率
+};
+let CFG = JSON.parse(JSON.stringify(CFG_DEFAULT));
+
+/* ---- 克制：天→地→人→鬼→天 ---- */
+const COUNTERS = {天:"地", 地:"人", 人:"鬼", 鬼:"天"};
+const isCounter = (att,def)=>COUNTERS[att]===def;
+const IDN_LIST = ["天","地","人","鬼"];
+
+/* ================= 資料（皆可於調參台增刪改） ================= */
+const STAT_KEYS = ["體魄","武藝","輕捷","靈術","意志","慧根","口才","儀容","膽識","緣法","眼力","巧手"];
+const STAT_DEFAULT = {體魄:14,武藝:13,輕捷:11,靈術:12,意志:12,慧根:10,口才:9,儀容:11,膽識:12,緣法:8,眼力:10,巧手:9};
+const MATE_STAT_KEYS = ["體魄","武藝","輕捷","靈術","意志"];
+
+const hero = {
+  id:"hero", name:"玩家角色", idn:"人", role:"主角",
+  stats:{...STAT_DEFAULT},
+  outfit:{def:3, buff:{靈術:1}},
+  hp:70, hpMax:70, san:12, sanMax:12
+};
+function syncHeroVitals(){ hero.hpMax=hero.stats.體魄*5; hero.hp=hero.hpMax; hero.sanMax=hero.stats.意志; hero.san=hero.sanMax; }
+syncHeroVitals();
+
+const MATES_DEFAULT = [
+  {id:"ally1", name:"隊友A", idn:"人", role:"近身輔攻", in:true,
+   stats:{體魄:13,武藝:15,輕捷:12,靈術:6,意志:10},
+   detail:"入隊條件：完成測試節點A。自動以武藝判定進行輔助攻擊。"},
+  {id:"ally2", name:"隊友B", idn:"鬼", role:"靈術輔攻", in:true,
+   stats:{體魄:6,武藝:4,輕捷:14,靈術:16,意志:14},
+   detail:"入隊條件：完成測試節點B。自動以靈術判定進行輔助攻擊。"},
+  {id:"ally3", name:"隊友C", idn:"天", role:"均衡輔攻", in:false,
+   stats:{體魄:15,武藝:12,輕捷:9,靈術:10,意志:13},
+   detail:"入隊條件：完成測試節點C。自動依情勢選擇武藝／靈術判定。"},
+];
+function hydrateMate(m){
+  const x={...m, stats:{...m.stats}};
+  x.hpMax=x.stats.體魄*5; x.hp=x.hpMax;
+  x.sanMax=x.stats.意志; x.san=x.sanMax;
+  x.avatar=(x.name||"？")[0];
+  return x;
+}
+let mates = MATES_DEFAULT.map(hydrateMate);
+
+const MONSTERS_DEFAULT = [
+  {id:"mon1", name:"敵人A", idn:"鬼", hp:120, atkMin:10, atkMax:18, hitP:12, agiP:8},
+];
+let monsters = MONSTERS_DEFAULT.map(m=>({...m}));
+
+/* ---- 關卡編成：出戰序列（= 敵方行動順序）與回合事件 ---- */
+const EVENT_TYPES = {paralyze:"玩家麻痺", aoe:"我方全體傷害", reinforce:"敵方增援", enemyHeal:"敵方全體回復", msg:"劇情訊息"};
+const ENC_DEFAULT = { roster:["mon1"], events:[] };
+let ENC = { roster:[...ENC_DEFAULT.roster], events:[] };
+
+const ITEMS_DEFAULT = [
+  {id:"i1", name:"回復道具A", effect:"heal", val:20, cnt:3, carry:true},
+  {id:"i2", name:"回復道具B", effect:"heal", val:10, cnt:5, carry:true},
+  {id:"i3", name:"防禦道具A", effect:"def",  val:2,  cnt:2, carry:true},
+  {id:"i4", name:"劇情道具A", effect:"plot", val:0,  cnt:1, carry:false},
+  {id:"i5", name:"回復道具C", effect:"heal", val:8,  cnt:4, carry:false},
+];
+let items = ITEMS_DEFAULT.map(i=>({...i}));
+const EFFECT_NAMES = {heal:"回復 HP", def:"防禦加成", plot:"劇情道具"};
+function itemDesc(it){
+  if(it.effect==="plot") return "劇情道具，戰鬥中不可使用。";
+  if(it.effect==="def") return `本場戰鬥防禦 +${it.val}。`;
+  return `回復 HP ${it.val}。`;
+}
+
+const SPELL_TYPES = {dmg:"傷害", heal:"回復", shield:"護盾", buff:"攻擊強化", debuff:"敵方弱化"};
+const SPELL_CHK = ["靈術","意志","慧根","膽識"];
+const SPELLS_DEFAULT = [
+  {id:"s1", name:"傷害技能A", san:2, chk:"靈術", type:"dmg",    vmin:14, vmax:22, stun:0, dur:0},
+  {id:"s2", name:"控制技能A", san:3, chk:"靈術", type:"dmg",    vmin:10, vmax:16, stun:1, dur:0},
+  {id:"s3", name:"護盾技能A", san:2, chk:"意志", type:"shield", vmin:12, vmax:0,  stun:0, dur:0},
+  {id:"s4", name:"治療技能A", san:2, chk:"靈術", type:"heal",   vmin:18, vmax:0,  stun:0, dur:0},
+  {id:"s5", name:"強化技能A", san:2, chk:"意志", type:"buff",   vmin:6,  vmax:0,  stun:0, dur:2},
+  {id:"s6", name:"弱化技能A", san:2, chk:"膽識", type:"debuff", vmin:4,  vmax:0,  stun:0, dur:2},
+];
+let spells = SPELLS_DEFAULT.map(s=>({...s}));
+function spellDesc(sp){
+  if(sp.type==="dmg")    return `對單一敵人造成 ${sp.vmin}–${sp.vmax} 傷害${sp.stun>0?`，並鎮住其行動 ${sp.stun} 回合`:""}。`;
+  if(sp.type==="heal")   return `回復我方單體 HP ${sp.vmin}。`;
+  if(sp.type==="shield") return `我方單體獲得 ${sp.vmin} 點護體，抵擋等量傷害。`;
+  if(sp.type==="buff")   return `我方單體攻擊 +${sp.vmin}，持續 ${sp.dur} 回合。`;
+  return `敵方單體攻擊 −${sp.vmin}，持續 ${sp.dur} 回合。`;
+}
+const spellTargetsEnemy = sp => sp.type==="dmg"||sp.type==="debuff";
+
+/* ---- 服裝庫（劇情強制換裝；「著裝」= 當前劇情裝束，供企劃切換測試） ---- */
+const OUTFITS_DEFAULT = [
+  {id:"o1", name:"測試服裝A", def:3, buffStat:"靈術", buffVal:1, src:"測試章節A取得"},
+  {id:"o2", name:"測試服裝B", def:0, buffStat:"",     buffVal:0, src:"初始服裝"},
+];
+let outfits = OUTFITS_DEFAULT.map(o=>({...o}));
+let activeOutfitId = "o1";
+function activeOutfit(){ return outfits.find(o=>o.id===activeOutfitId) || outfits[0]; }
+function applyOutfit(){
+  const o=activeOutfit(); activeOutfitId=o.id;
+  hero.outfit = { def:o.def||0, buff: (o.buffStat && o.buffVal) ? {[o.buffStat]:o.buffVal} : {} };
+}
+function renderOutfitPane(){
+  const o=activeOutfit();
+  const buffs=[];
+  if(o.def) buffs.push(`固定防禦 <b>+${o.def}</b>`);
+  if(o.buffStat&&o.buffVal) buffs.push(`${esc(o.buffStat)} <b>+${o.buffVal}</b>`);
+  $("#outfit-info").innerHTML=`
+    <span class="tag-lock">劇情裝束 · 不可替換</span>
+    <h3>${esc(o.name)}</h3>
+    <p style="color:var(--ash);font-size:13px">${esc(o.src||"")}</p>
+    <div class="outfit-buffs">${buffs.length?buffs.map(b=>`<div class="b">${b}</div>`).join(""):'<div class="b">無屬性加成</div>'}</div>
+    <div class="note-line">服裝隨劇情自動更換，玩家不可自行替換；此頁僅顯示當前裝束與加成，供戰前確認。（企劃可於「數值測試」頁切換著裝）</div>`;
+}
+
+let enemies = [];
+const ENEMY_SUFFIX = ["","甲","乙","丙","丁","戊","己"];
+let uidCounter = 1;
+const uid = p=>p+"_"+(Date.now().toString(36))+(uidCounter++);
+
+/* ================= 工具 ================= */
+const $ = s=>document.querySelector(s);
+const $$ = s=>[...document.querySelectorAll(s)];
+const rnd = (a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+const sleep = ms=>new Promise(r=>setTimeout(r,ms));
+const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
+const esc = s=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+function toast(msg){const t=$("#toast");t.textContent=msg;t.classList.add("show");clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove("show"),2200);}
+
+/* ================= 原型導覽 ================= */
+$$(".proto-tab").forEach(b=>b.addEventListener("click",()=>{
+  $$(".proto-tab").forEach(x=>x.classList.toggle("active",x===b));
+  $$(".screen").forEach(s=>s.classList.toggle("active",s.id==="screen-"+b.dataset.screen));
+}));
+function gotoScreen(name){
+  $$(".proto-tab").forEach(x=>x.classList.toggle("active",x.dataset.screen===name));
+  $$(".screen").forEach(s=>s.classList.toggle("active",s.id==="screen-"+name));
+}
+
+/* ================= 戰前準備 ================= */
+function heroStat(k){ return hero.stats[k] + (hero.outfit.buff[k]||0); }
+function renderHeroStats(){
+  $("#hero-stats").innerHTML = STAT_KEYS.map(k=>{
+    const buff = hero.outfit.buff[k]||0;
+    return `<div class="s"><span>${k}</span><b>${hero.stats[k]}${buff?`<span class="buff"> +${buff}</span>`:""}</b></div>`;
+  }).join("");
+  const vit = document.querySelectorAll("#screen-prep .hero-vitals .bar-label b");
+  if(vit[0]) vit[0].textContent = `${hero.hp} / ${hero.hpMax}`;
+  if(vit[1]) vit[1].textContent = `${hero.san} / ${hero.sanMax}`;
+}
+$$(".prep-tab").forEach(b=>b.addEventListener("click",()=>{
+  $$(".prep-tab").forEach(x=>x.classList.toggle("active",x===b));
+  $$(".prep-pane").forEach(p=>p.classList.toggle("active",p.id==="pane-"+b.dataset.pane));
+}));
+function idnColor(idn){ return idn==="鬼"?"var(--yin)":idn==="天"?"var(--gold)":idn==="地"?"var(--earth)":"var(--cinnabar-hi)"; }
+function renderMates(){
+  $("#mate-list").innerHTML = mates.map(m=>`
+    <div class="mate-card ${m.in?"in":""}" data-id="${m.id}" tabindex="0">
+      <div class="avatar" style="color:${idnColor(m.idn)}">${esc(m.avatar)}</div>
+      <div class="info">
+        <div class="nm"><span class="badge-id id-${m.idn}">${m.idn}</span>${esc(m.name)}</div>
+        <div class="role">${esc(m.role||"自訂角色")} · HP ${m.hp}/${m.hpMax} · SAN ${m.san}/${m.sanMax}</div>
+        <div class="mate-detail">${MATE_STAT_KEYS.map(k=>`${k} ${m.stats[k]??"—"}`).join("　")}<br>${esc(m.detail||"企劃自訂角色。")}</div>
+      </div>
+      <button class="state" data-view="${m.id}">檢視</button>
+      <div class="state">${m.in?"出戰中":"待命"}</div>
+    </div>`).join("");
+  $("#squad-n").textContent = mates.filter(m=>m.in).length;
+  updateSum();
+}
+$("#mate-list").addEventListener("click",e=>{
+  const view = e.target.closest("[data-view]");
+  const card = e.target.closest(".mate-card");
+  if(!card) return;
+  const m = mates.find(x=>x.id===card.dataset.id);
+  if(view){ card.classList.toggle("open"); return; }
+  const inCount = mates.filter(x=>x.in).length;
+  if(!m.in && inCount>=3){ toast("同時在場隊友上限為 3 名"); return; }
+  m.in = !m.in;
+  renderMates();
+});
+function renderItems(){
+  $("#item-grid").innerHTML = items.map(it=>`
+    <div class="item-card ${it.carry?"carry":""}" data-id="${it.id}" tabindex="0">
+      <span class="inm">${esc(it.name)}</span><span class="icnt">× ${it.cnt}</span>
+      <div class="idesc">${itemDesc(it)}</div>
+    </div>`).join("");
+  $("#carry-n").textContent = items.filter(i=>i.carry).length;
+  updateSum();
+}
+$("#item-grid").addEventListener("click",e=>{
+  const card = e.target.closest(".item-card"); if(!card) return;
+  const it = items.find(x=>x.id===card.dataset.id);
+  if(it.effect==="plot"){ toast("劇情道具無法攜帶入戰鬥"); return; }
+  if(!it.carry && items.filter(i=>i.carry).length>=6){ toast("攜帶欄已滿（6 格）"); return; }
+  it.carry = !it.carry;
+  renderItems();
+});
+function renderSpells(){
+  $("#spell-list").innerHTML = spells.map(s=>`
+    <div class="spell-row">
+      <div class="glyph">${esc((s.name||"？")[0])}</div>
+      <div class="sinfo">
+        <div class="snm">${esc(s.name)}<span style="font-size:11px;color:var(--ash-dim);margin-left:8px;letter-spacing:.1em">${SPELL_TYPES[s.type]||""}</span></div>
+        <div class="sdesc">${spellDesc(s)}</div>
+      </div>
+      <div class="spell-meta">
+        <span class="chk">檢定 <b>${esc(s.chk)} ${heroStat(s.chk)??"—"}</b></span>
+        <span>理智 <b>−${s.san}</b></span>
+      </div>
+    </div>`).join("");
+}
+function updateSum(){
+  $("#prep-sum").textContent =
+    `隊友 ${mates.filter(m=>m.in).map(m=>m.name).join("、")||"無"} · 攜帶道具 ${items.filter(i=>i.carry).length} 件`;
+}
+
+/* ================= 問杯核心 ================= */
+function poeRoll(P){
+  P = Math.max(1, Math.min(18, Math.round(P)));
+  const x = rnd(1,20);
+  if(x===1) return "crit";
+  if(x<=P) return "ok";
+  if(x<=19) return "fail";
+  return "fumble";
+}
+/* ---- 流程圖：防守方輕捷四級判定 ---- */
+function evadeResolve(atk, defenderAgiP){
+  const t = poeRoll(defenderAgiP);
+  if(t==="crit")   return {dmg:0, tier:t, txt:"被完全閃過"};
+  if(t==="ok")     return {dmg:Math.round(atk/2), tier:t, txt:"被閃過半數"};
+  if(t==="fail")   return {dmg:atk, tier:t, txt:""};
+  return {dmg:Math.round(atk*CFG.evadeFumbleMul), tier:t, txt:"對方閃避大失敗"};
+}
+const COUNTER_TAG = ` <span style="color:var(--gold);font-size:11px">克制</span>`;
+
+/* ================= 戰鬥狀態 ================= */
+let battle = null;
+let busy = false;
+let autoMode = false;
+
+$("#btn-go").addEventListener("click",startBattle);
+$("#btn-restart").addEventListener("click",()=>{
+  $("#end-overlay").classList.remove("show");
+  gotoScreen("prep");
+});
+
+const ENEMY_SVG = size=>`
+  <svg viewBox="0 0 170 190" width="${size}" height="${Math.round(size*190/170)}" fill="none">
+    <ellipse cx="85" cy="176" rx="52" ry="9" fill="rgba(0,0,0,.5)"/>
+    <path d="M85 18 C50 22 38 58 42 92 C30 104 26 128 40 148 C52 166 74 172 85 172 C96 172 118 166 130 148 C144 128 140 104 128 92 C132 58 120 22 85 18 Z" fill="#241b16" stroke="#4a3626" stroke-width="2"/>
+    <path d="M58 42 L44 14 L66 30 Z" fill="#241b16" stroke="#4a3626" stroke-width="2"/>
+    <path d="M112 42 L126 14 L104 30 Z" fill="#241b16" stroke="#4a3626" stroke-width="2"/>
+    <circle cx="68" cy="72" r="7" fill="#6fa3a8"><animate attributeName="opacity" values="1;.4;1" dur="2.4s" repeatCount="indefinite"/></circle>
+    <circle cx="102" cy="72" r="7" fill="#6fa3a8"><animate attributeName="opacity" values="1;.4;1" dur="2.4s" begin=".4s" repeatCount="indefinite"/></circle>
+    <path d="M66 108 Q85 120 104 108" stroke="#6fa3a8" stroke-width="2" fill="none"/>
+    <path d="M70 108 L72 118 M85 113 L85 124 M100 108 L98 118" stroke="#6fa3a8" stroke-width="2"/>
+  </svg>`;
+
+function buildSpawns(){
+  const defs = ENC.roster.map(id=>monsters.find(m=>m.id===id)).filter(Boolean);
+  const tally={};
+  defs.forEach(d=>tally[d.id]=(tally[d.id]||0)+1);
+  const seen={};
+  return defs.map(d=>{
+    const sub=(seen[d.id]=(seen[d.id]||0)+1)-1;
+    return {def:d, sub, multi:tally[d.id]>1};
+  });
+}
+
+async function startBattle(){
+  const spawns=buildSpawns();
+  if(!spawns.length){ toast("出戰序列為空，請至「數值測試 → 關卡編成」加入怪物"); return; }
+  if(spawns.length>6){ spawns.length=6; toast("出戰序列超過 6，已截斷至前 6 隻"); }
+  enemies = spawns.map((s,idx)=>({
+    idx,
+    name: s.def.name + (s.multi?ENEMY_SUFFIX[s.sub+1]:""),
+    idn: s.def.idn, def: s.def,
+    hp: s.def.hp, hpMax: s.def.hp, stunned:0, atkDown:null
+  }));
+  battle = {
+    round:1,
+    hero:{...hero, hp:hero.hpMax, san:hero.sanMax, shield:0, atkBuff:null, paralyzed:0, def:hero.outfit.def},
+    mates: mates.filter(m=>m.in).map(m=>({...m, stats:{...m.stats}, hp:m.hpMax, san:m.sanMax, shield:0, atkBuff:null})),
+    items: items.filter(i=>i.carry && i.effect!=="plot").map(i=>({...i})),
+  };
+  autoMode = false; busy = true;
+  $("#auto-flag").classList.remove("on");
+  $$(".cmd-btn").forEach(b=>b.classList.remove("on"));
+  setCmdEnabled(false);
+  $("#log-body").innerHTML = "";
+  $("#round-n").textContent = 1;
+  gotoScreen("battle");
+  buildEnemyZone(); renderParty(); renderEnemies();
+  const idns=[...new Set(enemies.map(e=>e.idn))];
+  log(`遭遇 ${enemies.map(e=>`<b style="color:var(--paper)">${esc(e.name)}</b>`).join("、")}。身份「${idns.join("」「")}」已揭曉並記錄。`,"sys");
+  const countered=idns.filter(i=>isCounter(hero.idn,i));
+  if(countered.length) log(`你的身份「${hero.idn}」剋制「${countered.join("」「")}」——對其傷害將獲得克制加成。`,"sys");
+  toast(`敵方 × ${enemies.length} · 身份已記錄於社交頁`);
+  // 流程圖：戰鬥開始 → 輕捷判定決定行動先後順序
+  await sleep(600);
+  const foeAgi=Math.max(...enemies.map(e=>e.def.agiP));
+  const weFirst = rnd(1,20)+heroStat("輕捷") >= rnd(1,20)+foeAgi;
+  log(`開場輕捷判定 —— ${weFirst?"<b style='color:var(--gold-pale)'>我方先手</b>":"<b style='color:var(--yin)'>敵方先手</b>"}`,"sys");
+  if(!weFirst){
+    await sleep(650);
+    await enemiesAct();
+    renderParty();
+    if(battle.hero.hp<=0){ endBattle("lose"); return; }
+  }
+  if(await runRoundEvents(1)) return;
+  await beginPlayerPhase();
+}
+
+/* ---- 渲染 ---- */
+function buildEnemyZone(){
+  const n=enemies.length;
+  const size = n===1?170 : n===2?135 : n<=4?110 : 92;
+  $("#enemy-row").innerHTML = enemies.map(e=>`
+    <div class="enemy-unit" data-eid="${e.idx}">
+      <div class="enemy-sprite">${ENEMY_SVG(size)}</div>
+      <div class="enemy-plate">
+        <div class="enm"><span class="badge-id id-${e.idn}">${e.idn}</span>${esc(e.name)}</div>
+        <div class="enemy-cond">
+          <div class="cond-pips"></div>
+          <span class="cond-text">無　傷</span>
+        </div>
+      </div>
+    </div>`).join("");
+}
+function renderEnemies(){
+  enemies.forEach(e=>{
+    const el=$(`.enemy-unit[data-eid="${e.idx}"]`); if(!el) return;
+    const r=e.hp/e.hpMax;
+    const pips=5, on=Math.ceil(Math.max(0,r)*pips);
+    el.querySelector(".cond-pips").innerHTML=Array.from({length:pips},(_,i)=>`<i class="${i<on?"":"off"}"></i>`).join("");
+    el.querySelector(".cond-text").textContent = r<=0?"擊　破": r>.8?"無　傷": r>.55?"輕　傷": r>.25?"重　傷":"瀕　死";
+    el.classList.toggle("dead", e.hp<=0);
+  });
+}
+function aliveEnemies(){ return enemies.filter(e=>e.hp>0); }
+
+function renderParty(){
+  const units = [ {...battle.hero, you:true}, ...battle.mates ];
+  $("#party-row").innerHTML = units.map(u=>`
+    <div class="pc-card ${u.hp<=0?"down":""}" data-id="${u.id}">
+      <div class="top">
+        <span class="badge-id id-${u.idn}">${u.idn}</span>
+        <span class="nm">${esc(u.name)}</span>
+        ${u.you?'<span class="you">你</span>':""}
+      </div>
+      <button class="stat-link" data-sheet="${u.id}">屬性</button>
+      <div class="bars">
+        <div>
+          <div class="bar-label"><span>HP</span><b>${Math.max(0,u.hp)} / ${u.hpMax}</b></div>
+          <div class="bar hp"><i style="transform:scaleX(${Math.max(0,u.hp/u.hpMax)})"></i></div>
+        </div>
+        <div>
+          <div class="bar-label"><span>SAN</span><b>${u.san} / ${u.sanMax}</b></div>
+          <div class="bar san"><i style="transform:scaleX(${u.san/u.sanMax})"></i></div>
+        </div>
+      </div>
+    </div>`).join("");
+}
+
+/* ---- 日誌 ---- */
+function log(html, cls=""){
+  const d=document.createElement("div");
+  d.className="l "+cls; d.innerHTML=html;
+  const b=$("#log-body"); b.appendChild(d); b.scrollTop=b.scrollHeight;
+}
+const TIER_HTML = {
+  crit:`<span class="tier t-crit">叠杯・大成功</span>`,
+  ok:`<span class="tier t-ok">聖杯・成功</span>`,
+  fail:`<span class="tier t-fail">哭杯・失敗</span>`,
+  fumble:`<span class="tier t-fumble">立杯・大失敗</span>`,
+};
+
+/* ---- 浮動數字（掛在個別敵人上） ---- */
+function floatOn(en, txt, cls=""){
+  const el = $(`.enemy-unit[data-eid="${en.idx}"]`) || $("#enemy-zone");
+  const d=document.createElement("div");
+  d.className="float-dmg "+cls; d.textContent=txt;
+  d.style.left=(38+rnd(-10,10))+"%";
+  d.style.top=(22+rnd(-8,8))+"%";
+  el.appendChild(d);
+  setTimeout(()=>d.remove(),1050);
+}
+
+/* ================= 擲筊演出 ================= */
+const JIAO_FLAT = `<svg viewBox="0 0 100 100"><path d="M8 58 Q8 26 50 26 Q92 26 92 58 Q92 66 50 66 Q8 66 8 58Z" fill="#a8352a" stroke="#e07a52" stroke-width="2.5"/><path d="M20 44 Q50 34 80 44" stroke="#e07a52" stroke-width="1.5" fill="none" opacity=".6"/></svg>`;
+const JIAO_CURVE = `<svg viewBox="0 0 100 100"><path d="M8 46 Q8 78 50 78 Q92 78 92 46 Q92 38 50 38 Q8 38 8 46Z" fill="#7c2019" stroke="#a8352a" stroke-width="2.5"/></svg>`;
+const JIAO_STAND = `<svg viewBox="0 0 100 100"><path d="M40 8 Q68 8 68 50 Q68 92 40 92 Q32 92 32 50 Q32 8 40 8Z" fill="#a8352a" stroke="#e07a52" stroke-width="2.5"/></svg>`;
+
+function poeShow(checkName, tier){
+  return new Promise(res=>{
+    const ov=$("#poe-overlay"), floor=$("#poe-floor");
+    $("#poe-check").textContent = checkName;
+    const r=$("#poe-result"); r.classList.remove("show");
+    ov.classList.add("show");
+    const j1=$("#jiao1"), j2=$("#jiao2");
+    if(tier==="crit"){ j1.innerHTML=JIAO_FLAT; j2.innerHTML=JIAO_FLAT; j2.style.margin="-70px 0 0 -60px"; }
+    else { j2.style.margin="0"; }
+    if(tier==="ok"){ j1.innerHTML=JIAO_FLAT; j2.innerHTML=JIAO_CURVE; }
+    if(tier==="fail"){ j1.innerHTML=JIAO_CURVE; j2.innerHTML=JIAO_CURVE; }
+    if(tier==="fumble"){ j1.innerHTML=JIAO_CURVE; j2.innerHTML=JIAO_STAND; }
+    floor.classList.remove("tossing"); void floor.offsetWidth; floor.classList.add("tossing");
+    const tierEl=$("#poe-tier"), subEl=$("#poe-sub");
+    const cfg={
+      crit:["叠　杯","杯覆相疊 · 大成功，附正面效果","crit"],
+      ok:["聖　杯","神明應允 · 檢定成功","ok"],
+      fail:["哭　杯","未得神允 · 檢定失敗","fail"],
+      fumble:["立　杯","筊杯直立 · 大失敗，附負面效果","fumble"],
+    }[tier];
+    setTimeout(()=>{
+      tierEl.textContent=cfg[0]; subEl.textContent=cfg[1];
+      tierEl.className="poe-tier "+cfg[2];
+      r.classList.add("show");
+    }, 1250);
+    setTimeout(()=>{ ov.classList.remove("show"); res(); }, autoMode?2100:2600);
+  });
+}
+
+/* ================= QTE ================= */
+function simQTE(){
+  const r=Math.random();
+  if(r<CFG.simQtePerfect) return "perfect";
+  if(r<CFG.simQtePerfect+CFG.simQteHit) return "hit";
+  return "miss";
+}
+function qteMul(q){ return q==="perfect"?CFG.qtePerfect : q==="hit"?CFG.qteHit : 1; }
+
+function runQTE(name){
+  return new Promise(res=>{
+    const ov=$("#qte-overlay"); $("#qte-name").textContent=name;
+    const v=$("#qte-verdict"); v.classList.remove("show"); v.textContent="";
+    const ready=$("#qte-ready"); ready.textContent="準　備"; ready.classList.remove("go");
+    const track=$("#qte-track"); track.classList.remove("in-zone");
+    const strike=$("#qte-strike"); strike.className="qte-strike";
+    const zoneW=24, perfW=7;
+    const zoneL=rnd(38,64);
+    const perfL=zoneL+(zoneW-perfW)/2;
+    const zh=$("#qte-zone-hit"), zp=$("#qte-zone-perfect");
+    zh.style.left=zoneL+"%"; zh.style.width=zoneW+"%";
+    zp.style.left=perfL+"%"; zp.style.width=perfW+"%";
+    const needle=$("#qte-needle");
+    needle.style.transform="translateX(0px)";
+    ov.classList.add("show");
+
+    const PASS=900;              // 指針單趟時間（ms），時間基準 → 幀率無關
+    let trackW=0, startT=0, rafId=0;
+    let done=false, started=false, lastZone=false, toH=null;
+    const posAt=t=>{             // 三角波：0→100→0
+      const ph=((t-startT)%(PASS*2))/PASS;
+      return (ph<=1?ph:2-ph)*100;
+    };
+    function frame(t){
+      if(done) return;
+      if(!startT){ startT=t; trackW=track.clientWidth; }
+      const pos=posAt(t);
+      needle.style.transform=`translateX(${(pos/100*trackW).toFixed(1)}px)`; // transform 走 GPU 合成
+      const inZone = pos>=zoneL && pos<=zoneL+zoneW;
+      if(inZone!==lastZone){     // 僅在狀態改變時寫 DOM
+        lastZone=inZone;
+        track.classList.toggle("in-zone",inZone);
+        strike.classList.toggle("go",inZone);
+        ready.textContent=inZone?"按　！":"";
+        ready.classList.toggle("go",inZone);
+      }
+      rafId=requestAnimationFrame(frame);
+    }
+    function finish(result){
+      if(done) return; done=true;
+      cancelAnimationFrame(rafId); clearTimeout(toH);
+      document.removeEventListener("keydown",onKey,true);
+      document.removeEventListener("pointerdown",onTap,true);
+      track.classList.remove("in-zone"); ready.textContent="";
+      strike.className="qte-strike";
+      const map={perfect:["完　美","var(--gold)"],hit:["命　中","var(--cinnabar-hi)"],miss:["失　誤","var(--ash-dim)"]};
+      v.textContent=map[result][0]; v.style.color=map[result][1]; v.classList.add("show");
+      setTimeout(()=>{ ov.classList.remove("show"); res(result); },800);
+    }
+    function judge(){
+      if(!started){ ready.textContent="尚未開始"; return; }
+      const pos=posAt(performance.now()); // 以輸入當下的時間戳判定，不受繪製延遲影響
+      if(pos>=perfL && pos<=perfL+perfW) finish("perfect");
+      else if(pos>=zoneL && pos<=zoneL+zoneW) finish("hit");
+      else finish("miss");
+    }
+    const onTap=e=>{ e.preventDefault(); judge(); };
+    const onKey=e=>{ if(e.code==="Space"||e.code==="Enter"){ e.preventDefault(); judge(); } };
+    document.addEventListener("pointerdown",onTap,true);
+    document.addEventListener("keydown",onKey,true);
+    setTimeout(()=>{
+      if(done) return;
+      started=true; ready.textContent="";
+      strike.classList.add("armed");
+      rafId=requestAnimationFrame(frame);
+      toH=setTimeout(()=>finish("miss"), PASS*4); // 兩個完整來回
+    }, 900);
+  });
+}
+
+/* ================= 指令列 ================= */
+$("#cmd-bar").addEventListener("click",e=>{
+  const b=e.target.closest(".cmd-btn"); if(!b) return;
+  const cmd=b.dataset.cmd;
+  if(cmd==="auto"){ toggleAuto(b); return; }
+  if(busy) return;
+  closeSubmenu();
+  if(cmd==="art") beginTargetEnemy(en=>playerArt(en));
+  if(cmd==="spell") openSpellMenu();
+  if(cmd==="item") openItemMenu();
+  if(cmd==="flee") playerFlee();
+});
+function setCmdEnabled(on){ $$(".cmd-btn").forEach(b=>{ if(b.dataset.cmd!=="auto") b.disabled=!on; }); }
+
+function closeSubmenu(){ const s=$("#submenu"); s.classList.remove("show"); s.innerHTML=""; }
+function openSpellMenu(){
+  const s=$("#submenu");
+  if(!spells.length){ toast("尚無任何靈術，可至「數值測試」頁新增"); return; }
+  s.innerHTML = spells.map(sp=>`
+    <button class="sub-item" data-spell="${sp.id}" ${battle.hero.san<sp.san?"disabled":""}>
+      <div class="n">${esc(sp.name)}<span style="font-size:10px;color:var(--ash-dim);margin-left:6px">${SPELL_TYPES[sp.type]||""}</span></div>
+      <div class="m">檢定 ${esc(sp.chk)} · 理智 <b>−${sp.san}</b>${battle.hero.san<sp.san?" · 理智不足":""}</div>
+    </button>`).join("") + `<button class="sub-cancel">取消</button>`;
+  s.classList.add("show");
+  s.onclick=e=>{
+    if(e.target.closest(".sub-cancel")){ closeSubmenu(); return; }
+    const b=e.target.closest("[data-spell]"); if(!b) return;
+    const sp=spells.find(x=>x.id===b.dataset.spell);
+    closeSubmenu();
+    if(spellTargetsEnemy(sp)) beginTargetEnemy(en=>playerSpell(sp,null,en));
+    else beginTargetAlly(u=>playerSpell(sp,u,null));
+  };
+}
+function openItemMenu(){
+  const s=$("#submenu");
+  if(!battle.items.filter(i=>i.cnt>0).length){ toast("未攜帶可用道具"); return; }
+  s.innerHTML = battle.items.map(it=>`
+    <button class="sub-item" data-item="${it.id}" ${it.cnt<=0?"disabled":""}>
+      <div class="n">${esc(it.name)} × ${it.cnt}</div>
+      <div class="m">${itemDesc(it)}</div>
+    </button>`).join("") + `<button class="sub-cancel">取消</button>`;
+  s.classList.add("show");
+  s.onclick=e=>{
+    if(e.target.closest(".sub-cancel")){ closeSubmenu(); return; }
+    const b=e.target.closest("[data-item]"); if(!b) return;
+    const it=battle.items.find(x=>x.id===b.dataset.item);
+    closeSubmenu();
+    beginTargetAlly(u=>playerItem(it,u));
+  };
+}
+
+/* ---- 目標選擇 ---- */
+function beginTargetEnemy(cb){
+  const alive=aliveEnemies();
+  if(!alive.length) return;
+  busy=true; setCmdEnabled(false);
+  if(alive.length===1){ (async()=>{ await cb(alive[0]); })(); return; }
+  $("#target-banner").classList.add("show");
+  const els = alive.map(e=>$(`.enemy-unit[data-eid="${e.idx}"]`));
+  els.forEach(el=>el.classList.add("targetable"));
+  const cleanup=()=>{
+    els.forEach(el=>el.classList.remove("targetable"));
+    $("#target-banner").classList.remove("show");
+    $("#enemy-row").removeEventListener("click",onPick);
+    document.removeEventListener("keydown",onEsc);
+  };
+  const onPick=async e=>{
+    const el=e.target.closest(".enemy-unit"); if(!el||el.classList.contains("dead")) return;
+    const en=enemies[+el.dataset.eid];
+    cleanup(); await cb(en);
+  };
+  const onEsc=e=>{ if(e.key==="Escape"){ cleanup(); busy=false; setCmdEnabled(true); } };
+  $("#enemy-row").addEventListener("click",onPick);
+  document.addEventListener("keydown",onEsc);
+}
+function beginTargetAlly(cb){
+  busy=true; setCmdEnabled(false);
+  $("#target-banner").textContent="選擇我方目標"; $("#target-banner").classList.add("show");
+  const cards=$$("#party-row .pc-card");
+  cards.forEach(c=>c.classList.add("targetable"));
+  const handler=async e=>{
+    const c=e.target.closest(".pc-card"); if(!c) return;
+    cleanup();
+    const id=c.dataset.id;
+    const u = id==="hero"?battle.hero:battle.mates.find(m=>m.id===id);
+    await cb(u);
+  };
+  function cleanup(){
+    cards.forEach(c=>c.classList.remove("targetable"));
+    $("#party-row").removeEventListener("click",handler);
+    document.removeEventListener("keydown",onEsc);
+    $("#target-banner").classList.remove("show");
+    $("#target-banner").textContent="選擇目標";
+  }
+  const onEsc=e=>{ if(e.key==="Escape"){ cleanup(); busy=false; setCmdEnabled(true); } };
+  document.addEventListener("keydown",onEsc);
+  $("#party-row").addEventListener("click",handler);
+}
+
+/* ================= 玩家行動（依《戰鬥流程圖》） ================= */
+async function playerArt(target){
+  const P = heroStat("武藝");
+  const tier = poeRoll(P);
+  await poeShow("武藝檢定 · 問杯", tier);
+  log(`你對${esc(target.name)}使出基本攻擊 —— ${TIER_HTML[tier]}`,"me");
+  if(tier==="fail"){ floatOn(target,"落空","miss"); }
+  else if(tier==="fumble"){
+    if(CFG.fumbleSelfDmg>0){
+      log(`立杯負面效果 —— 煞氣反噬，你受到 <span class="dmg">${CFG.fumbleSelfDmg}</span> 點傷害`,"me");
+      battle.hero.hp-=CFG.fumbleSelfDmg; renderParty();
+    } else {
+      log(`未造成傷害與效果`,"me");
+    }
+  } else {
+    const qte = autoMode ? simQTE() : await runQTE("基本攻擊 · 追擊");
+    let atk = rnd(CFG.playerAtkMin, CFG.playerAtkMax);
+    if(battle.hero.atkBuff) atk += battle.hero.atkBuff.val;
+    atk = Math.round(atk * qteMul(qte));
+    if(tier==="crit"){ atk=Math.round(atk*CFG.critMul); log(`叠杯正面效果 —— 本擊附加靈光，傷害躍升`,"me"); }
+    const counter = isCounter(hero.idn, target.idn);
+    if(counter) atk = Math.round(atk * CFG.counterMul);
+    const ev = evadeResolve(atk, target.def.agiP);
+    if(ev.dmg<=0){
+      floatOn(target,"閃避","miss");
+      log(`${esc(target.name)}身形一晃 —— 攻擊被完全閃過`,"me");
+    }else{
+      dealToEnemy(target, ev.dmg, tier==="crit"||ev.tier==="fumble");
+      log(`基本攻擊命中${qte!=="miss"?`（QTE ${qte==="perfect"?"完美":"命中"}）`:""}${ev.txt?`，${ev.txt}`:""} —— 對${esc(target.name)}造成 <span class="dmg">${ev.dmg}</span> 傷害${counter?COUNTER_TAG:""}`,"me");
+    }
+  }
+  await afterPlayer();
+}
+async function playerSpell(sp, allyTarget, enemyTarget){
+  battle.hero.san -= sp.san; renderParty(); // 流程圖：成功失敗皆扣 San
+  const P = heroStat(sp.chk) ?? 8;
+  const tier = poeRoll(P);
+  await poeShow(`${esc(sp.name)} · ${esc(sp.chk)}檢定`, tier);
+  log(`你施放【${esc(sp.name)}】（理智 −${sp.san}）—— ${TIER_HTML[tier]}`,"me");
+  if(tier==="fail"){ if(enemyTarget) floatOn(enemyTarget,"符燼散去","miss"); }
+  else if(tier==="fumble"){
+    log(`立杯負面效果 —— 靈力反衝，額外損失 <span class="dmg">1</span> 點理智`,"me");
+    battle.hero.san=Math.max(0,battle.hero.san-1); renderParty();
+  } else {
+    const mul = tier==="crit"?CFG.critMul:1;
+    if(tier==="crit") log(`叠杯正面效果 —— 靈光倍湧，效果躍升`,"me");
+    if(sp.type==="dmg"){
+      // 流程圖：靈術成功直接造成傷害和效果（無閃避判定）
+      let dmg = rnd(sp.vmin, Math.max(sp.vmin, sp.vmax));
+      const counter = isCounter(hero.idn, enemyTarget.idn);
+      if(counter) dmg=Math.round(dmg*CFG.counterMul);
+      dmg=Math.round(dmg*mul);
+      if(sp.stun>0) enemyTarget.stunned=Math.max(enemyTarget.stunned, Math.round(sp.stun));
+      dealToEnemy(enemyTarget, dmg, tier==="crit");
+      log(`【${esc(sp.name)}】灼燒${esc(enemyTarget.name)} —— 造成 <span class="dmg">${dmg}</span> 傷害${sp.stun>0?`，其行動被鎮住 ${Math.round(sp.stun)} 回合`:""}${counter?COUNTER_TAG:""}`,"me");
+    } else if(sp.type==="heal"){
+      const v=Math.min(Math.round(sp.vmin*mul), allyTarget.hpMax-allyTarget.hp);
+      allyTarget.hp+=v; renderParty();
+      log(`【${esc(sp.name)}】—— ${allyTarget.id==="hero"?"你":esc(allyTarget.name)} 回復 <span class="dmg" style="color:var(--ok)">${v}</span> HP`,"me");
+    } else if(sp.type==="shield"){
+      const v=Math.round(sp.vmin*mul);
+      allyTarget.shield=(allyTarget.shield||0)+v;
+      log(`護盾展開 —— ${esc(allyTarget.name)} 獲得 <span class="dmg">${v}</span> 點護體`,"me");
+      renderParty();
+    } else if(sp.type==="buff"){
+      const v=Math.round(sp.vmin*mul);
+      allyTarget.atkBuff={val:v, rounds:Math.max(1,Math.round(sp.dur))};
+      log(`【${esc(sp.name)}】—— ${allyTarget.id==="hero"?"你":esc(allyTarget.name)} 攻擊 <span class="dmg">+${v}</span>，持續 ${Math.max(1,Math.round(sp.dur))} 回合`,"me");
+    } else if(sp.type==="debuff"){
+      const v=Math.round(sp.vmin*mul);
+      enemyTarget.atkDown={val:v, rounds:Math.max(1,Math.round(sp.dur))};
+      floatOn(enemyTarget,"弱化","miss");
+      log(`【${esc(sp.name)}】壓制${esc(enemyTarget.name)} —— 其攻擊 <span class="dmg">−${v}</span>，持續 ${Math.max(1,Math.round(sp.dur))} 回合`,"me");
+    }
+  }
+    await afterPlayer();
+}
+async function playerItem(it, u){
+  it.cnt--;
+  if(it.effect==="heal"){
+    const v=Math.min(it.val, u.hpMax-u.hp);
+    u.hp+=v;
+    log(`你對 ${u.id==="hero"?"自己":esc(u.name)} 使用【${esc(it.name)}】—— 回復 <span class="dmg" style="color:var(--ok)">${v}</span> HP`,"me");
+  } else if(it.effect==="def"){
+    battle.hero.def+=it.val;
+    log(`你使用【${esc(it.name)}】—— 本場戰鬥防禦 +${it.val}`,"me");
+  }
+  renderParty();
+  await afterPlayer();
+}
+async function playerFlee(){
+  busy=true; setCmdEnabled(false);
+  const P=heroStat("輕捷");
+  const tier=poeRoll(P);
+  await poeShow("逃跑 · 輕捷檢定", tier);
+  log(`你試圖脫離戰鬥 —— ${TIER_HTML[tier]}`,"me");
+  if(tier==="crit"||tier==="ok"){
+    endBattle("flee"); return;
+  }
+  log(`退路被封 —— 逃跑失敗，不造成傷害和效果`,"me");
+  await afterPlayer();
+}
+
+/* ---- 傷害處理 ---- */
+function dealToEnemy(en, dmg, crit){
+  en.hp-=dmg;
+  const el=$(`.enemy-unit[data-eid="${en.idx}"]`);
+  if(el){ el.classList.remove("hit"); void el.offsetWidth; el.classList.add("hit"); }
+  floatOn(en, dmg, crit?"crit":"");
+  renderEnemies();
+}
+function dealToUnit(u, dmg){
+  if(u.shield&&u.shield>0){
+    const ab=Math.min(u.shield,dmg); u.shield-=ab; dmg-=ab;
+    if(ab>0) log(`護盾破裂 —— ${esc(u.name)} 抵擋 ${ab} 點傷害`,"sys");
+  }
+  dmg=Math.max(0,dmg-(u.id==="hero"?battle.hero.def:0));
+  u.hp-=dmg; renderParty();
+  return dmg;
+}
+
+/* ================= 隊友／敵方行動 ================= */
+async function mateAct(m){
+  const useSpell = m.stats.靈術>m.stats.武藝;
+  const P = Math.max(m.stats.武藝, m.stats.靈術);
+  const tier=poeRoll(P);
+  if(tier==="fail"||tier==="fumble"){
+    log(`${esc(m.name)}的${useSpell?"靈術":"攻擊"}未能奏效`);
+    return;
+  }
+  const alive=aliveEnemies(); if(!alive.length) return;
+  const target=alive[rnd(0,alive.length-1)];
+  let atk = rnd(CFG.mateAtkMin, CFG.mateAtkMax);
+  if(m.atkBuff) atk += m.atkBuff.val;
+  const mateMul = 1 + (CFG.qtePerfect-1)*CFG.mateQteRatio;
+  atk = Math.round(atk*mateMul);
+  if(tier==="crit") atk=Math.round(atk*CFG.critMul);
+  const counter = isCounter(m.idn, target.idn);
+  if(counter) atk=Math.round(atk*CFG.counterMul);
+  const ev = evadeResolve(atk, target.def.agiP);
+  if(ev.dmg<=0){ log(`${esc(m.name)}的攻勢被${esc(target.name)}閃過`); return; }
+  dealToEnemy(target, ev.dmg, false);
+  log(`${esc(m.name)}${useSpell?"引動靈術":"揮刀突進"}${ev.txt?`，${ev.txt}`:""} —— 對${esc(target.name)}造成 <span class="dmg">${ev.dmg}</span> 傷害${counter?COUNTER_TAG:""}`);
+}
+
+async function enemyActOne(en){
+  if(en.hp<=0) return;
+  if(en.stunned>0){
+    en.stunned--; log(`${esc(en.name)}被控制效果限制，無法行動`,"sys"); return;
+  }
+  const hitTier = poeRoll(en.def.hitP);
+  const pool=[battle.hero,...battle.mates.filter(m=>m.hp>0)];
+  if(!pool.filter(u=>u.hp>0).length) return;
+  const t=pool[rnd(0,pool.length-1)];
+  const tName = t.id==="hero"?"你":esc(t.name);
+  if(hitTier==="fail"||hitTier==="fumble"){
+    log(`${esc(en.name)}撲向 ${tName} —— 攻擊落空`);
+    return;
+  }
+  let atk=rnd(en.def.atkMin,en.def.atkMax);
+  if(en.atkDown) atk=Math.max(1, atk-en.atkDown.val);
+  if(hitTier==="crit") atk=Math.round(atk*CFG.critMul);
+  const counter = isCounter(en.idn, t.idn);
+  if(counter) atk=Math.round(atk*CFG.counterMul);
+  const agiP = t.id==="hero"?heroStat("輕捷"):(t.stats?.輕捷||8);
+  const ev = evadeResolve(atk, agiP);
+  if(ev.dmg<=0){ log(`${esc(en.name)}撲向 ${tName} —— 被完全閃開`); return; }
+  const real=dealToUnit(t,ev.dmg);
+  const evNote = ev.tier==="ok"?"（閃過半數）": ev.tier==="fumble"?"（閃避大失敗！）":"";
+  log(`${esc(en.name)}利爪撕裂${tName}${evNote} —— 造成 <span class="dmg">${real}</span> 傷害${counter?COUNTER_TAG:""}`);
+}
+async function enemiesAct(){
+  for(const en of enemies){
+    if(en.hp<=0) continue;
+    await sleep(420);
+    await enemyActOne(en);
+    if(battle.hero.hp<=0) return;
+  }
+}
+
+/* ================= 回合流程 ================= */
+function allEnemiesDown(){ return enemies.every(e=>e.hp<=0); }
+async function afterPlayer(){
+  if(allEnemiesDown()){ endBattle("win"); return; }
+  await sleep(500);
+  for(const m of battle.mates){
+    if(m.hp<=0) continue;
+    await sleep(420);
+    await mateAct(m);
+    if(allEnemiesDown()){ endBattle("win"); return; }
+  }
+  await sleep(550);
+  await enemiesAct();
+  renderParty();
+  if(battle.hero.hp<=0){ endBattle("lose"); return; }
+  tickEffects();
+  battle.round++;
+  $("#round-n").textContent=battle.round;
+  log(`—— 第 ${battle.round} 回合 ——`,"sys");
+  if(await runRoundEvents(battle.round)) return;
+  await beginPlayerPhase();
+}
+async function beginPlayerPhase(){
+  if(battle.hero.paralyzed>0){
+    battle.hero.paralyzed--;
+    log(`你四肢僵直，無法行動${battle.hero.paralyzed>0?`（麻痺剩餘 ${battle.hero.paralyzed} 回合）`:"（麻痺將於下回合解除）"}`,"me");
+    await sleep(700);
+    await afterPlayer();
+    return;
+  }
+  busy=false; setCmdEnabled(true);
+  if(autoMode){ await sleep(700); if(autoMode&&!busy) autoTurn(); }
+}
+function spawnReinforcements(md, n){
+  let added=0;
+  for(let i=0;i<n;i++){
+    if(enemies.filter(e=>e.hp>0).length>=6) break;
+    const nth=enemies.filter(e=>e.def.id===md.id).length;
+    enemies.push({idx:enemies.length, name:md.name+(nth>0?ENEMY_SUFFIX[Math.min(nth+1,6)]:""),
+      idn:md.idn, def:md, hp:md.hp, hpMax:md.hp, stunned:0, atkDown:null});
+    added++;
+  }
+  if(added){ buildEnemyZone(); renderEnemies(); }
+  return added;
+}
+async function runRoundEvents(r){
+  const evs=ENC.events.filter(e=>Math.round(e.round)===r);
+  for(const ev of evs){
+    await sleep(380);
+    const TAG=`<span style="color:var(--gold)">【事件】</span>`;
+    if(ev.type==="msg"){
+      log(`${TAG}${esc(ev.text||"")}`,"sys");
+    } else if(ev.type==="paralyze"){
+      const n=Math.max(1,Math.round(ev.val||1));
+      battle.hero.paralyzed=(battle.hero.paralyzed||0)+n;
+      log(`${TAG}邪祟纏身 —— 你被麻痺，${n} 回合內無法行動`,"sys");
+    } else if(ev.type==="aoe"){
+      const v=Math.max(0,Math.round(ev.val||0));
+      log(`${TAG}瘴霧襲來 —— 我方全體受到 ${v} 點傷害`,"sys");
+      for(const u of [battle.hero,...battle.mates]){ if(u.hp>0) dealToUnit(u,v); }
+      renderParty();
+      if(battle.hero.hp<=0){ endBattle("lose"); return true; }
+    } else if(ev.type==="reinforce"){
+      const md=monsters.find(m=>m.id===ev.monsterId)||monsters[0];
+      const n=Math.max(1,Math.round(ev.val||1));
+      const added=spawnReinforcements(md,n);
+      log(added?`${TAG}增援 —— ${esc(md.name)} × ${added} 加入戰鬥（列於行動順序末位）`:`${TAG}增援受阻 —— 場上敵方已滿`,"sys");
+    } else if(ev.type==="enemyHeal"){
+      const v=Math.max(0,Math.round(ev.val||0));
+      enemies.forEach(en=>{ if(en.hp>0) en.hp=Math.min(en.hpMax,en.hp+v); });
+      renderEnemies();
+      log(`${TAG}陰氣匯聚 —— 敵方全體回復 ${v} HP`,"sys");
+    }
+  }
+  return false;
+}
+async function autoTurn(){
+  if(busy||!autoMode) return;
+  busy=true; setCmdEnabled(false);
+  const alive=aliveEnemies(); if(!alive.length) return;
+  await playerArt(alive[0]);
+}
+function toggleAuto(btn){
+  autoMode=!autoMode;
+  btn.classList.toggle("on",autoMode);
+  $("#auto-flag").classList.toggle("on",autoMode);
+  log(autoMode?`自動戰鬥開啟 —— 自動以武藝行動，QTE 進行隨機模擬檢定`:`自動戰鬥解除`,"sys");
+  if(autoMode&&!busy) autoTurn();
+}
+
+function tickEffects(){
+  [battle.hero,...battle.mates].forEach(u=>{
+    if(u.atkBuff && --u.atkBuff.rounds<=0){
+      log(`${u.id==="hero"?"你":esc(u.name)}的攻擊強化消退`,"sys"); u.atkBuff=null;
+    }
+  });
+  enemies.forEach(en=>{
+    if(en.atkDown && --en.atkDown.rounds<=0){
+      log(`${esc(en.name)}的弱化消退`,"sys"); en.atkDown=null;
+    }
+  });
+}
+
+/* ---- 結束 ---- */
+function endBattle(kind){
+  busy=true;
+  const t=$("#end-title"), s=$("#end-sub");
+  t.classList.remove("lose");
+  if(kind==="win"){ t.textContent="討　伐"; s.textContent="敵方已全數擊破 · 身份已記錄於社交頁"; renderEnemies(); }
+  if(kind==="flee"){ t.textContent="脫　離"; s.textContent="你成功脫離戰鬥 · HP 與 SAN 不會自然回復"; }
+  if(kind==="lose"){ t.textContent="殞　落"; t.classList.add("lose"); s.textContent="HP 歸零 —— 戰鬥結束"; }
+  setTimeout(()=>$("#end-overlay").classList.add("show"), 700);
+}
+
+/* ================= 屬性檢視 ================= */
+document.addEventListener("click",e=>{
+  const b=e.target.closest("[data-sheet]"); if(!b) return;
+  e.stopPropagation();
+  const id=b.dataset.sheet;
+  const u = id==="hero"?{...battle.hero,you:true}:battle.mates.find(m=>m.id===id);
+  if(!u) return;
+  $("#sheet-name").innerHTML=`<span class="badge-id id-${u.idn}">${u.idn}</span>${esc(u.name)}`;
+  $("#sheet-role").textContent = u.you?`主角 · ${activeOutfit().name}（防禦 +${battle.hero.def}）`:(mates.find(m=>m.id===id)?.role||"自訂角色");
+  $("#sheet-vitals").innerHTML=`
+    <div><div class="bar-label"><span>HP</span><b>${Math.max(0,u.hp)} / ${u.hpMax}</b></div><div class="bar hp"><i style="transform:scaleX(${Math.max(0,u.hp/u.hpMax)})"></i></div></div>
+    <div><div class="bar-label"><span>SAN</span><b>${u.san} / ${u.sanMax}</b></div><div class="bar san"><i style="transform:scaleX(${u.san/u.sanMax})"></i></div></div>`;
+  const stats = u.you?Object.fromEntries(STAT_KEYS.map(k=>[k,heroStat(k)])):u.stats;
+  $("#sheet-stats").innerHTML=Object.entries(stats).map(([k,v])=>`<div class="s"><span>${k}</span><b>${v}</b></div>`).join("");
+  $("#sheet-overlay").classList.add("show");
+},true);
+$("#sheet-close").addEventListener("click",()=>$("#sheet-overlay").classList.remove("show"));
+$("#sheet-overlay").addEventListener("click",e=>{ if(e.target.id==="sheet-overlay") $("#sheet-overlay").classList.remove("show"); });
+
+/* ================= 企劃調參台 ================= */
+/* ---- 通用參數（schema 型） ---- */
+const GENERAL_SCHEMA = [
+  {title:"玩家屬性（影響檢定 P 值與上限）", rows:[
+    ["武藝（攻擊檢定）","stat.武藝"],["靈術（靈術檢定）","stat.靈術"],["意志（SAN 上限）","stat.意志"],
+    ["體魄（HP 上限 ×5）","stat.體魄"],["輕捷（閃避／逃跑／先手）","stat.輕捷"]]},
+  {title:"玩家武藝傷害", rows:[["基礎傷害下限","playerAtkMin"],["基礎傷害上限","playerAtkMax"]]},
+  {title:"倍率（流程圖【暫定此數值】處）", rows:[
+    ["QTE 完美倍率","qtePerfect"],["QTE 命中倍率","qteHit"],["叠杯大成功倍率","critMul"],
+    ["克制倍率","counterMul"],["閃避大失敗承傷倍率","evadeFumbleMul"],["玩家立杯反噬傷害（0=無）","fumbleSelfDmg"]]},
+  {title:"隊友傷害與 QTE", rows:[
+    ["基礎傷害下限","mateAtkMin"],["基礎傷害上限","mateAtkMax"],
+    ["QTE 折算比例（流程圖0.5／舊規0.7）","mateQteRatio"]]},
+  {title:"自動戰鬥／批次模擬 QTE 機率", rows:[
+    ["完美機率（0–1）","simQtePerfect"],["命中機率（0–1）","simQteHit"]]},
+];
+function cfgGet(path){
+  const p=path.split(".");
+  if(p[0]==="stat") return hero.stats[p[1]];
+  return p.reduce((o,k)=>o[k],CFG);
+}
+function cfgSet(path,v){
+  const p=path.split(".");
+  if(p[0]==="stat"){ hero.stats[p[1]]=v; return; }
+  let o=CFG;
+  for(let i=0;i<p.length-1;i++) o=o[p[i]];
+  o[p[p.length-1]]=v;
+}
+function renderGeneral(){
+  $("#tune-grid").innerHTML = GENERAL_SCHEMA.map(g=>`
+    <div class="tune-card"><h3>${g.title}</h3>
+      ${g.rows.map(([label,path])=>`
+        <div class="tune-row"><span>${label}</span>
+          <input type="number" step="any" data-path="${path}" value="${cfgGet(path)}">
+        </div>`).join("")}
+    </div>`).join("");
+}
+
+/* ---- 實體編輯器 ---- */
+function idnSelect(ent,id,val){
+  return `<select data-ent="${ent}" data-id="${id}" data-field="idn">
+    ${IDN_LIST.map(x=>`<option value="${x}" ${x===val?"selected":""}>${x}</option>`).join("")}
+  </select>`;
+}
+function numRow(label,ent,id,field,val){
+  return `<div class="tune-row"><span>${label}</span>
+    <input type="number" step="any" data-ent="${ent}" data-id="${id}" data-field="${field}" value="${val}"></div>`;
+}
+function renderMatesEditor(){
+  $("#ent-mates").innerHTML = mates.map(m=>`
+    <div class="tune-card ent-card">
+      <button class="ent-del" data-del-mate="${m.id}">刪除</button>
+      <h3>${esc(m.name)}</h3>
+      <div class="tune-row"><span>名稱</span>
+        <input type="text" data-ent="mate" data-id="${m.id}" data-field="name" value="${esc(m.name)}"></div>
+      <div class="tune-row"><span>身份</span>${idnSelect("mate",m.id,m.idn)}</div>
+      ${MATE_STAT_KEYS.map(k=>numRow(k,"mate",m.id,k,m.stats[k])).join("")}
+      <div class="ent-derived">HP 上限 = 體魄 × 5 → <b style="color:var(--paper)">${m.hpMax}</b>　SAN 上限 = 意志 → <b style="color:var(--paper)">${m.sanMax}</b><br>檢定屬性取武藝／靈術較高者</div>
+    </div>`).join("");
+}
+function renderMonstersEditor(){
+  $("#ent-monsters").innerHTML = monsters.map(md=>`
+    <div class="tune-card ent-card">
+      <button class="ent-del" data-del-monster="${md.id}">刪除</button>
+      <h3>${esc(md.name)}</h3>
+      <div class="tune-row"><span>名稱</span>
+        <input type="text" data-ent="monster" data-id="${md.id}" data-field="name" value="${esc(md.name)}"></div>
+      <div class="tune-row"><span>身份</span>${idnSelect("monster",md.id,md.idn)}</div>
+      ${numRow("單體 HP","monster",md.id,"hp",md.hp)}
+      ${numRow("攻擊下限","monster",md.id,"atkMin",md.atkMin)}
+      ${numRow("攻擊上限","monster",md.id,"atkMax",md.atkMax)}
+      ${numRow("攻擊命中 P（1–18）","monster",md.id,"hitP",md.hitP)}
+      ${numRow("輕捷 P（閃避／先手）","monster",md.id,"agiP",md.agiP)}
+    </div>`).join("");
+}
+function renderItemsEditor(){
+  $("#ent-items").innerHTML = items.map(it=>`
+    <div class="tune-card ent-card">
+      <button class="ent-del" data-del-item="${it.id}">刪除</button>
+      <h3>${esc(it.name)}</h3>
+      <div class="tune-row"><span>名稱</span>
+        <input type="text" data-ent="item" data-id="${it.id}" data-field="name" value="${esc(it.name)}"></div>
+      <div class="tune-row"><span>效果類型</span>
+        <select data-ent="item" data-id="${it.id}" data-field="effect">
+          ${Object.entries(EFFECT_NAMES).map(([k,v])=>`<option value="${k}" ${k===it.effect?"selected":""}>${v}</option>`).join("")}
+        </select></div>
+      ${numRow("效果值","item",it.id,"val",it.val)}
+      ${numRow("數量","item",it.id,"cnt",it.cnt)}
+      <div class="ent-derived">${itemDesc(it)}</div>
+    </div>`).join("");
+}
+const SPELL_FIELD_ROWS = {
+  dmg:    [["傷害下限","vmin"],["傷害上限","vmax"],["鎮住回合（0=無）","stun"]],
+  heal:   [["回復量","vmin"]],
+  shield: [["護體值","vmin"]],
+  buff:   [["攻擊加值","vmin"],["持續回合","dur"]],
+  debuff: [["攻擊減值","vmin"],["持續回合","dur"]],
+};
+function renderSpellsEditor(){
+  $("#ent-spells").innerHTML = spells.map(sp=>`
+    <div class="tune-card ent-card">
+      <button class="ent-del" data-del-spell="${sp.id}">刪除</button>
+      <h3>${esc(sp.name)}</h3>
+      <div class="tune-row"><span>名稱</span>
+        <input type="text" data-ent="spell" data-id="${sp.id}" data-field="name" value="${esc(sp.name)}"></div>
+      <div class="tune-row"><span>類型</span>
+        <select data-ent="spell" data-id="${sp.id}" data-field="type" data-live="1">
+          ${Object.entries(SPELL_TYPES).map(([k,v])=>`<option value="${k}" ${k===sp.type?"selected":""}>${v}</option>`).join("")}
+        </select></div>
+      <div class="tune-row"><span>檢定屬性</span>
+        <select data-ent="spell" data-id="${sp.id}" data-field="chk">
+          ${SPELL_CHK.map(k=>`<option value="${k}" ${k===sp.chk?"selected":""}>${k}</option>`).join("")}
+        </select></div>
+      ${numRow("SAN 消耗","spell",sp.id,"san",sp.san)}
+      ${(SPELL_FIELD_ROWS[sp.type]||[]).map(([label,f])=>numRow(label,"spell",sp.id,f,sp[f])).join("")}
+      <div class="ent-derived">${spellDesc(sp)}<br>叠杯大成功時效果 × 大成功倍率</div>
+    </div>`).join("");
+}
+function renderOutfitsEditor(){
+  $("#ent-outfits").innerHTML = outfits.map(o=>`
+    <div class="tune-card ent-card">
+      <button class="ent-del" data-del-outfit="${o.id}">刪除</button>
+      <h3>${esc(o.name)}${o.id===activeOutfitId?'<span style="font-size:11px;color:var(--gold);margin-left:8px;letter-spacing:.15em">著裝中</span>':""}</h3>
+      <div class="tune-row"><span>名稱</span>
+        <input type="text" data-ent="outfit" data-id="${o.id}" data-field="name" value="${esc(o.name)}"></div>
+      ${numRow("固定防禦","outfit",o.id,"def",o.def)}
+      <div class="tune-row"><span>加成屬性</span>
+        <select data-ent="outfit" data-id="${o.id}" data-field="buffStat">
+          <option value="" ${!o.buffStat?"selected":""}>無</option>
+          ${STAT_KEYS.map(k=>`<option value="${k}" ${k===o.buffStat?"selected":""}>${k}</option>`).join("")}
+        </select></div>
+      ${numRow("加成值","outfit",o.id,"buffVal",o.buffVal)}
+      <div class="tune-row"><span>來源說明</span>
+        <input type="text" data-ent="outfit" data-id="${o.id}" data-field="src" value="${esc(o.src||"")}"></div>
+      ${o.id===activeOutfitId?"":`<button class="btn ghost sm" style="margin-top:10px;width:100%" data-wear="${o.id}">著　裝</button>`}
+    </div>`).join("");
+}
+function renderRoster(){
+  ENC.roster = ENC.roster.filter(id=>monsters.some(m=>m.id===id)); // 清除失效引用
+  const rows = ENC.roster.map((id,i)=>{
+    const md=monsters.find(m=>m.id===id);
+    return `<div class="roster-row">
+      <span class="no">${i+1}</span>
+      <span class="rn"><span class="badge-id id-${md.idn}">${md.idn}</span>${esc(md.name)}</span>
+      <button class="roster-btn" data-ros-up="${i}" ${i===0?"disabled":""}>↑</button>
+      <button class="roster-btn" data-ros-down="${i}" ${i===ENC.roster.length-1?"disabled":""}>↓</button>
+      <button class="roster-btn" data-ros-del="${i}">移除</button>
+    </div>`;
+  }).join("");
+  $("#enc-roster").innerHTML = `<h3>出戰序列（行動順序由上而下，增援排末位）</h3>
+    ${rows || '<div class="roster-empty">序列為空 —— 從下方加入怪物</div>'}
+    <div class="roster-add">
+      <select id="roster-pick">${monsters.map(m=>`<option value="${m.id}">${esc(m.name)}（${m.idn}）</option>`).join("")}</select>
+      <button class="btn ghost sm" id="roster-add-btn">加入序列</button>
+    </div>`;
+}
+const EVENT_FIELD_ROWS = {
+  paralyze:[["麻痺回合數","val"]],
+  aoe:[["傷害值","val"]],
+  reinforce:[["增援數量","val"]],
+  enemyHeal:[["回復量","val"]],
+  msg:[],
+};
+function renderEventsEditor(){
+  ENC.events.forEach(ev=>{ if(!monsters.some(m=>m.id===ev.monsterId)) ev.monsterId=monsters[0]?.id; });
+  $("#enc-events").innerHTML = ENC.events.map(ev=>`
+    <div class="tune-card ent-card">
+      <button class="ent-del" data-del-event="${ev.id}">刪除</button>
+      <h3>第 ${Math.round(ev.round)} 回合 · ${EVENT_TYPES[ev.type]||""}</h3>
+      ${numRow("觸發回合","event",ev.id,"round",ev.round)}
+      <div class="tune-row"><span>事件類型</span>
+        <select data-ent="event" data-id="${ev.id}" data-field="type" data-live="1">
+          ${Object.entries(EVENT_TYPES).map(([k,v])=>`<option value="${k}" ${k===ev.type?"selected":""}>${v}</option>`).join("")}
+        </select></div>
+      ${ev.type==="reinforce"?`<div class="tune-row"><span>增援怪物</span>
+        <select data-ent="event" data-id="${ev.id}" data-field="monsterId">
+          ${monsters.map(m=>`<option value="${m.id}" ${m.id===ev.monsterId?"selected":""}>${esc(m.name)}</option>`).join("")}
+        </select></div>`:""}
+      ${(EVENT_FIELD_ROWS[ev.type]||[]).map(([label,f])=>numRow(label,"event",ev.id,f,ev[f])).join("")}
+      ${ev.type==="msg"?`<div class="tune-row"><span>訊息內容</span>
+        <input type="text" data-ent="event" data-id="${ev.id}" data-field="text" value="${esc(ev.text||"")}"></div>`:""}
+      <div class="ent-derived">於第 ${Math.round(ev.round)} 回合開始時觸發（先於玩家行動）</div>
+    </div>`).join("") || "";
+  if(!ENC.events.length) $("#enc-events").innerHTML='<div class="roster-empty" style="grid-column:1/-1">尚無事件 —— 按右上「＋ 新增事件」加入（例：第 3 回合玩家麻痺 1 回合）</div>';
+}
+function renderEncounter(){ renderRoster(); renderEventsEditor(); }
+function renderEditors(){ renderMatesEditor(); renderMonstersEditor(); renderItemsEditor(); renderSpellsEditor(); renderOutfitsEditor(); renderEncounter(); }
+
+/* ---- 新增 ---- */
+$("#add-mate").addEventListener("click",()=>{
+  mates.push(hydrateMate({id:uid("m"), name:"新角色", idn:"人", role:"自訂角色", in:false,
+    stats:{體魄:10,武藝:10,輕捷:10,靈術:10,意志:10}, detail:"企劃自訂角色。"}));
+  renderMatesEditor(); renderMates();
+  toast("已新增角色（預設待命，可至戰前準備切換出戰）");
+});
+$("#add-monster").addEventListener("click",()=>{
+  monsters.push({id:uid("mon"), name:"新怪物", idn:"鬼", hp:100, atkMin:8, atkMax:14, hitP:10, agiP:8});
+  renderMonstersEditor(); renderEncounter();
+  toast("已新增怪物（記得加入出戰序列）");
+});
+$("#add-spell").addEventListener("click",()=>{
+  spells.push({id:uid("s"), name:"新靈術", san:2, chk:"靈術", type:"dmg", vmin:10, vmax:16, stun:0, dur:0});
+  renderSpellsEditor(); renderSpells();
+  toast("已新增靈術");
+});
+$("#add-outfit").addEventListener("click",()=>{
+  outfits.push({id:uid("o"), name:"新服裝", def:0, buffStat:"", buffVal:0, src:"企劃自訂"});
+  renderOutfitsEditor();
+  toast("已新增服裝（按「著裝」設為當前裝束）");
+});
+$("#add-item").addEventListener("click",()=>{
+  items.push({id:uid("i"), name:"新道具", effect:"heal", val:10, cnt:1, carry:false});
+  renderItemsEditor(); renderItems();
+  toast("已新增道具（預設未攜帶，可至戰前準備勾選）");
+});
+
+/* ---- 刪除 ---- */
+document.addEventListener("click",e=>{
+  const dm=e.target.closest("[data-del-mate]");
+  if(dm){ mates=mates.filter(m=>m.id!==dm.dataset.delMate); renderMatesEditor(); renderMates(); toast("角色已刪除"); return; }
+  const dn=e.target.closest("[data-del-monster]");
+  if(dn){
+    if(monsters.length<=1){ toast("至少保留一種怪物"); return; }
+    const id=dn.dataset.delMonster;
+    monsters=monsters.filter(m=>m.id!==id);
+    ENC.roster=ENC.roster.filter(r=>r!==id);
+    ENC.events.forEach(ev=>{ if(ev.monsterId===id) ev.monsterId=monsters[0].id; });
+    renderMonstersEditor(); renderEncounter(); toast("怪物已刪除（序列與事件引用已同步清理）"); return;
+  }
+  const di=e.target.closest("[data-del-item]");
+  if(di){ items=items.filter(i=>i.id!==di.dataset.delItem); renderItemsEditor(); renderItems(); toast("道具已刪除"); return; }
+  const ds=e.target.closest("[data-del-spell]");
+  if(ds){ spells=spells.filter(s=>s.id!==ds.dataset.delSpell); renderSpellsEditor(); renderSpells(); toast("靈術已刪除"); return; }
+  const dof=e.target.closest("[data-del-outfit]");
+  if(dof){
+    if(outfits.length<=1){ toast("至少保留一件服裝"); return; }
+    const id=dof.dataset.delOutfit;
+    outfits=outfits.filter(o=>o.id!==id);
+    if(activeOutfitId===id){ activeOutfitId=outfits[0].id; applyOutfit(); renderHeroStats(); renderSpells(); renderOutfitPane(); }
+    renderOutfitsEditor(); toast("服裝已刪除"); return;
+  }
+  const w=e.target.closest("[data-wear]");
+  if(w){
+    harvestEntities(); // 保留未套用的欄位修改
+    activeOutfitId=w.dataset.wear; applyOutfit();
+    renderHeroStats(); renderSpells(); renderOutfitPane(); renderOutfitsEditor();
+    toast(`已著裝：${activeOutfit().name}`); return;
+  }
+});
+/* 出戰序列操作 */
+document.addEventListener("click",e=>{
+  if(e.target.id==="roster-add-btn"){
+    if(ENC.roster.length>=6){ toast("出戰序列已達上限 6 隻"); return; }
+    const sel=$("#roster-pick"); if(!sel||!sel.value) return;
+    ENC.roster.push(sel.value); renderRoster(); return;
+  }
+  const up=e.target.closest("[data-ros-up]");
+  if(up){ const i=+up.dataset.rosUp; [ENC.roster[i-1],ENC.roster[i]]=[ENC.roster[i],ENC.roster[i-1]]; renderRoster(); return; }
+  const dn=e.target.closest("[data-ros-down]");
+  if(dn){ const i=+dn.dataset.rosDown; [ENC.roster[i],ENC.roster[i+1]]=[ENC.roster[i+1],ENC.roster[i]]; renderRoster(); return; }
+  const del=e.target.closest("[data-ros-del]");
+  if(del){ ENC.roster.splice(+del.dataset.rosDel,1); renderRoster(); return; }
+  const de=e.target.closest("[data-del-event]");
+  if(de){ harvestEntities(); ENC.events=ENC.events.filter(ev=>ev.id!==de.dataset.delEvent); renderEventsEditor(); toast("事件已刪除"); return; }
+});
+$("#add-event").addEventListener("click",()=>{
+  harvestEntities();
+  ENC.events.push({id:uid("ev"), round:2, type:"paralyze", val:1, monsterId:monsters[0]?.id, text:""});
+  renderEventsEditor();
+  toast("已新增事件（預設：第 2 回合玩家麻痺 1 回合）");
+});
+/* 事件類型切換 → 即時重繪對應欄位 */
+$("#enc-events").addEventListener("change",e=>{
+  if(e.target.dataset.field==="type" && e.target.dataset.live){
+    harvestEntities();
+    renderEventsEditor();
+  }
+});
+
+/* 靈術類型切換 → 即時重繪對應欄位（先收割當前輸入避免遺失） */
+$("#ent-spells").addEventListener("change",e=>{
+  if(e.target.dataset.field==="type" && e.target.dataset.live){
+    harvestEntities();
+    renderSpellsEditor();
+  }
+});
+
+/* ---- 套用 ---- */
+function harvestEntities(){
+  $$('[data-ent]').forEach(el=>{
+    const {ent,id,field}=el.dataset;
+    const list = ent==="mate"?mates : ent==="monster"?monsters : ent==="item"?items : ent==="spell"?spells : ent==="event"?ENC.events : outfits;
+    const obj = list.find(x=>x.id===id); if(!obj) return;
+    let v = el.value;
+    if(el.type==="number"){ v=parseFloat(v); if(isNaN(v)) return; }
+    if(ent==="mate" && MATE_STAT_KEYS.includes(field)) obj.stats[field]=v;
+    else obj[field]=v;
+  });
+}
+function applyInputs(){
+  // 通用參數
+  $$("#tune-grid input").forEach(inp=>{
+    const v=parseFloat(inp.value);
+    if(!isNaN(v)) cfgSet(inp.dataset.path, v);
+  });
+  harvestEntities();
+  // 衍生值重算
+  syncHeroVitals();
+  mates.forEach(m=>{
+    m.hpMax=m.stats.體魄*5; m.hp=m.hpMax;
+    m.sanMax=m.stats.意志; m.san=m.sanMax;
+    m.avatar=(m.name||"？")[0];
+  });
+  applyOutfit();
+  ENC.events.forEach(ev=>{
+    ev.round=Math.max(1,Math.round(ev.round||1));
+    if(!Object.keys(EVENT_TYPES).includes(ev.type)) ev.type="msg";
+  });
+  renderHeroStats(); renderSpells(); renderMates(); renderItems(); renderOutfitPane(); renderEditors();
+}
+$("#screen-tune").addEventListener("input",()=>{ $("#apply-hint").textContent="修改後尚未套用"; });
+$("#btn-apply").addEventListener("click",()=>{
+  applyInputs();
+  $("#apply-hint").textContent="已套用 —— 下一場戰鬥生效";
+  toast("參數已套用，於下一場戰鬥生效");
+});
+$("#btn-reset-cfg").addEventListener("click",()=>{
+  CFG = JSON.parse(JSON.stringify(CFG_DEFAULT));
+  hero.stats = {...STAT_DEFAULT};
+  const inMap=Object.fromEntries(mates.map(m=>[m.id,m.in]));
+  mates = MATES_DEFAULT.map(m=>hydrateMate({...m, in: inMap[m.id] ?? m.in}));
+  monsters = MONSTERS_DEFAULT.map(m=>({...m}));
+  const carryMap=Object.fromEntries(items.map(i=>[i.id,i.carry]));
+  items = ITEMS_DEFAULT.map(i=>({...i, carry: carryMap[i.id] ?? i.carry}));
+  spells = SPELLS_DEFAULT.map(s=>({...s}));
+  outfits = OUTFITS_DEFAULT.map(o=>({...o}));
+  activeOutfitId = "o1";
+  ENC = { roster:[...ENC_DEFAULT.roster], events:[] };
+  syncHeroVitals(); applyOutfit();
+  renderGeneral(); renderEditors(); renderHeroStats(); renderSpells(); renderMates(); renderItems(); renderOutfitPane();
+  $("#apply-hint").textContent="已恢復預設（自訂實體已清除）";
+});
+
+/* ---- 匯出／匯入 ---- */
+function collectConfig(){
+  const encounter = {
+    id:"default",
+    name:"預設關卡",
+    roster:[...ENC.roster],
+    events:ENC.events.map(ev=>({...ev}))
+  };
+  return {
+    _meta:{
+      tool:"battle-ui-prototype",
+      version:6,
+      schemaVersion:"battle-ui-config/v6",
+      exportedAt:new Date().toISOString(),
+      includes:["cfg","hero","mates","monsters","items","spells","outfits","activeOutfit","encounter","levels"]
+    },
+    cfg:CFG,
+    hero:{id:hero.id, name:hero.name, idn:hero.idn, role:hero.role, stats:hero.stats},
+    heroStats:hero.stats,
+    mates:mates.map(m=>({id:m.id, name:m.name, idn:m.idn, role:m.role||"自訂角色", in:m.in, stats:m.stats, detail:m.detail||""})),
+    monsters:monsters.map(m=>({...m})),
+    items:items.map(i=>({id:i.id, name:i.name, effect:i.effect, val:i.val, cnt:i.cnt, carry:i.carry})),
+    spells:spells.map(s=>({...s})),
+    outfits:outfits.map(o=>({...o})),
+    activeOutfit:activeOutfitId,
+    encounter,
+    levels:[encounter],
+  };
+}
+$("#btn-export").addEventListener("click",()=>{
+  applyInputs();
+  const data=JSON.stringify(collectConfig(),null,2);
+  const blob=new Blob([data],{type:"application/json"});
+  const a=document.createElement("a");
+  const d=new Date(), pad=n=>String(n).padStart(2,"0");
+  a.href=URL.createObjectURL(blob);
+  a.download=`battle_config_${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast("參數已匯出為 JSON");
+});
+$("#btn-import").addEventListener("click",()=>$("#import-file").click());
+$("#import-file").addEventListener("change",e=>{
+  const f=e.target.files[0]; if(!f) return;
+  const reader=new FileReader();
+  reader.onload=()=>{
+    try{
+      const data=JSON.parse(reader.result);
+      if(!data.cfg) throw new Error("缺少 cfg 欄位");
+      CFG = Object.assign(JSON.parse(JSON.stringify(CFG_DEFAULT)), data.cfg);
+      delete CFG.enemy; // 舊版欄位不再使用
+      if(data.hero){
+        hero.name = data.hero.name || hero.name;
+        hero.idn = IDN_LIST.includes(data.hero.idn) ? data.hero.idn : hero.idn;
+        hero.role = data.hero.role || hero.role;
+        hero.stats = Object.assign({...STAT_DEFAULT}, data.hero.stats||data.heroStats||{});
+      } else if(data.heroStats) hero.stats = Object.assign({...STAT_DEFAULT}, data.heroStats);
+      // v3：完整實體清單
+      if(Array.isArray(data.mates)){
+        mates = data.mates.map(m=>hydrateMate({
+          id:m.id||uid("m"), name:m.name||"角色", idn:IDN_LIST.includes(m.idn)?m.idn:"人",
+          role:m.role||"自訂角色", in:!!m.in, detail:m.detail||"",
+          stats:Object.assign({體魄:10,武藝:10,輕捷:10,靈術:10,意志:10}, m.stats||{})
+        }));
+      }
+      let legacyCounts=null;
+      if(Array.isArray(data.monsters)){
+        legacyCounts = data.monsters.some(m=>m.count!=null) ? data.monsters.map(m=>({id:m.id, count:m.count??0})) : null;
+        monsters = data.monsters.map(m=>({
+          id:m.id||uid("mon"), name:m.name||"怪物", idn:IDN_LIST.includes(m.idn)?m.idn:"鬼",
+          hp:m.hp??100, atkMin:m.atkMin??8, atkMax:m.atkMax??14,
+          hitP:m.hitP??10, agiP:m.agiP??8
+        }));
+        if(!monsters.length) monsters = MONSTERS_DEFAULT.map(m=>({...m}));
+      } else if(data.cfg && data.cfg.enemy){
+        // v2 相容：單一敵方參數 → 轉為預設敵人定義
+        const e=data.cfg.enemy;
+        monsters=[{id:"mon1", name:"敵人A", idn:"鬼", hp:e.hp??120,
+          atkMin:e.atkMin??10, atkMax:e.atkMax??18, hitP:e.hitP??12, agiP:e.agiP??8}];
+        legacyCounts=[{id:"mon1", count:e.count??1}];
+      }
+      // 關卡編成：v5 直接讀；舊版由 count 重建序列
+      const importedEncounter = (data.encounter && Array.isArray(data.encounter.roster))
+        ? data.encounter
+        : (Array.isArray(data.levels) && data.levels.find(lv=>Array.isArray(lv.roster))) || null;
+      if(importedEncounter){
+        ENC.roster = importedEncounter.roster.filter(id=>monsters.some(m=>m.id===id)).slice(0,6);
+        ENC.events = (Array.isArray(importedEncounter.events)?importedEncounter.events:[]).map(ev=>({
+          id:ev.id||uid("ev"), round:Math.max(1,Math.round(ev.round??1)),
+          type:Object.keys(EVENT_TYPES).includes(ev.type)?ev.type:"msg",
+          val:ev.val??1, text:ev.text||"",
+          monsterId:monsters.some(m=>m.id===ev.monsterId)?ev.monsterId:monsters[0].id
+        }));
+      } else {
+        ENC.roster=[]; ENC.events=[];
+        (legacyCounts||[]).forEach(lc=>{
+          if(!monsters.some(m=>m.id===lc.id)) return;
+          for(let i=0;i<Math.min(6,Math.round(lc.count||0));i++){
+            if(ENC.roster.length<6) ENC.roster.push(lc.id);
+          }
+        });
+        if(!ENC.roster.length && monsters.length) ENC.roster=[monsters[0].id];
+      }
+      if(Array.isArray(data.items)){
+        items = data.items.map(i=>({
+          id:i.id||uid("i"), name:i.name||"道具",
+          effect:["heal","def","plot"].includes(i.effect)?i.effect:"heal",
+          val:i.val??0, cnt:i.cnt??1, carry:!!i.carry
+        }));
+      } else if(data.items && typeof data.items==="object"){
+        // v2 相容：覆蓋式物件
+        items.forEach(it=>{
+          const d=data.items[it.id]; if(!d) return;
+          if(d.cnt!=null) it.cnt=d.cnt;
+          if(d.heal!=null){ it.effect="heal"; it.val=d.heal; }
+          if(d.def!=null){ it.effect="def"; it.val=d.def; }
+        });
+      }
+      if(Array.isArray(data.spells)){
+        spells = data.spells.map(s=>({
+          id:s.id||uid("s"), name:s.name||"靈術",
+          san:s.san??2, chk:SPELL_CHK.includes(s.chk)?s.chk:"靈術",
+          type:Object.keys(SPELL_TYPES).includes(s.type)?s.type:"dmg",
+          vmin:s.vmin??10, vmax:s.vmax??0, stun:s.stun??0, dur:s.dur??0
+        }));
+      }
+      if(Array.isArray(data.outfits) && data.outfits.length){
+        outfits = data.outfits.map(o=>({
+          id:o.id||uid("o"), name:o.name||"服裝", def:o.def??0,
+          buffStat:STAT_KEYS.includes(o.buffStat)?o.buffStat:"", buffVal:o.buffVal??0, src:o.src||""
+        }));
+        activeOutfitId = outfits.some(o=>o.id===data.activeOutfit)?data.activeOutfit:outfits[0].id;
+      }
+      syncHeroVitals(); applyOutfit();
+      renderGeneral(); renderEditors(); renderHeroStats(); renderSpells(); renderMates(); renderItems(); renderOutfitPane();
+      $("#apply-hint").textContent="已匯入 —— 下一場戰鬥生效";
+      toast("參數已匯入");
+    }catch(err){
+      toast("匯入失敗：檔案格式不正確");
+    }
+    e.target.value="";
+  };
+  reader.readAsText(f);
+});
+
+/* ---- 批次模擬（不跑演出，純結算） ---- */
+function simulateOne(){
+  const H={hp:hero.stats.體魄*5, def:hero.outfit.def, art:heroStat("武藝"), agi:heroStat("輕捷"), idn:hero.idn, paralyzed:0};
+  const M=mates.filter(m=>m.in).map(m=>({hp:m.hpMax, agi:m.stats.輕捷, P:Math.max(m.stats.武藝,m.stats.靈術), idn:m.idn}));
+  const spawns=buildSpawns().slice(0,6);
+  if(!spawns.length) return {result:"invalid"};
+  const E=spawns.map(s=>({hp:s.def.hp, def:s.def, idn:s.def.idn}));
+  let dmgDealt=0, dmgTaken=0, round=0;
+  const foeAgi=Math.max(...E.map(e=>e.def.agiP));
+  const weFirst = rnd(1,20)+H.agi >= rnd(1,20)+foeAgi;
+  const aliveE=()=>E.filter(x=>x.hp>0);
+
+  function fireEvents(r){
+    for(const ev of ENC.events){
+      if(Math.round(ev.round)!==r) continue;
+      if(ev.type==="paralyze"){ H.paralyzed+=Math.max(1,Math.round(ev.val||1)); }
+      else if(ev.type==="aoe"){
+        const v=Math.max(0,Math.round(ev.val||0));
+        const dh=Math.max(0,v-H.def); H.hp-=dh; dmgTaken+=dh;
+        M.forEach(m=>{ if(m.hp>0) m.hp-=v; });
+        if(H.hp<=0) return true;
+      }
+      else if(ev.type==="reinforce"){
+        const md=monsters.find(m=>m.id===ev.monsterId)||monsters[0];
+        const n=Math.max(1,Math.round(ev.val||1));
+        for(let k=0;k<n;k++){ if(aliveE().length>=6) break; E.push({hp:md.hp, def:md, idn:md.idn}); }
+      }
+      else if(ev.type==="enemyHeal"){
+        const v=Math.max(0,Math.round(ev.val||0));
+        E.forEach(en=>{ if(en.hp>0) en.hp=Math.min(en.def.hp,en.hp+v); });
+      }
+    }
+    return false;
+  }
+  function enemyTurn(){
+    for(const en of E){
+      if(en.hp<=0) continue;
+      const hitTier=poeRoll(en.def.hitP);
+      if(hitTier==="fail"||hitTier==="fumble") continue;
+      const pool=[{u:H,hero:true},...M.filter(m=>m.hp>0).map(m=>({u:m}))];
+      const pick=pool[rnd(0,pool.length-1)];
+      let atk=rnd(en.def.atkMin,en.def.atkMax);
+      if(hitTier==="crit") atk=Math.round(atk*CFG.critMul);
+      if(isCounter(en.idn, pick.u.idn)) atk=Math.round(atk*CFG.counterMul);
+      const ev=evadeResolve(atk, pick.hero?H.agi:pick.u.agi);
+      let d=ev.dmg;
+      if(pick.hero){ d=Math.max(0,d-H.def); dmgTaken+=d; }
+      pick.u.hp-=d;
+      if(H.hp<=0) return;
+    }
+  }
+  function ourTurn(){
+    const ae=aliveE(); if(!ae.length) return;
+    if(H.paralyzed>0){ H.paralyzed--; }
+    else {
+      const target=ae[0];
+      const tier=poeRoll(H.art);
+      if(tier==="ok"||tier==="crit"){
+        const q=simQTE();
+        let atk=rnd(CFG.playerAtkMin,CFG.playerAtkMax);
+        atk=Math.round(atk*qteMul(q));
+        if(tier==="crit") atk=Math.round(atk*CFG.critMul);
+        if(isCounter(H.idn, target.idn)) atk=Math.round(atk*CFG.counterMul);
+        const ev=evadeResolve(atk, target.def.agiP);
+        target.hp-=ev.dmg; dmgDealt+=ev.dmg;
+      } else if(tier==="fumble" && CFG.fumbleSelfDmg>0){
+        H.hp-=CFG.fumbleSelfDmg;
+      }
+    }
+    if(!aliveE().length) return;
+    const mateMul=1+(CFG.qtePerfect-1)*CFG.mateQteRatio;
+    for(const m of M){
+      if(m.hp<=0) continue;
+      const ae2=aliveE(); if(!ae2.length) return;
+      const t=poeRoll(m.P);
+      if(t==="fail"||t==="fumble") continue;
+      let atk=rnd(CFG.mateAtkMin,CFG.mateAtkMax);
+      atk=Math.round(atk*mateMul);
+      if(t==="crit") atk=Math.round(atk*CFG.critMul);
+      const target2=ae2[rnd(0,ae2.length-1)];
+      if(isCounter(m.idn, target2.idn)) atk=Math.round(atk*CFG.counterMul);
+      const ev=evadeResolve(atk, target2.def.agiP);
+      target2.hp-=ev.dmg; dmgDealt+=ev.dmg;
+    }
+  }
+  if(!weFirst){ enemyTurn(); if(H.hp<=0) return {result:"lose",round:0,heroHp:0,dmgDealt,dmgTaken}; }
+  while(round<80){
+    round++;
+    if(fireEvents(round)) return {result:"lose",round,heroHp:0,dmgDealt,dmgTaken};
+    ourTurn();
+    if(!aliveE().length) return {result:"win",round,heroHp:H.hp,dmgDealt,dmgTaken};
+    enemyTurn();
+    if(H.hp<=0) return {result:"lose",round,heroHp:0,dmgDealt,dmgTaken};
+  }
+  return {result:"draw",round,heroHp:H.hp,dmgDealt,dmgTaken};
+}
+$("#btn-sim").addEventListener("click",()=>{
+  applyInputs();
+  if(!buildSpawns().length){ toast("出戰序列為空，請先於關卡編成加入怪物"); return; }
+  const N=1000, rs=[];
+  for(let i=0;i<N;i++) rs.push(simulateOne());
+  const wins=rs.filter(r=>r.result==="win");
+  const loses=rs.filter(r=>r.result==="lose");
+  const draws=rs.filter(r=>r.result==="draw");
+  const avg=(arr,f)=>arr.length?(arr.reduce((s,r)=>s+f(r),0)/arr.length):0;
+  const pct=n=>(n/N*100).toFixed(1)+"%";
+  const bar=n=>`<span class="pct-bar" style="width:${Math.round(n/N*120)}px"></span>`;
+  const hpMax=hero.stats.體魄*5;
+  $("#sim-table").innerHTML=`
+    <tr><td>勝率</td><td>${bar(wins.length)}${pct(wins.length)}（${wins.length} 場）</td></tr>
+    <tr><td>敗率</td><td>${bar(loses.length)}${pct(loses.length)}（${loses.length} 場）</td></tr>
+    ${draws.length?`<tr><td>僵局（80 回合未分）</td><td>${pct(draws.length)}</td></tr>`:""}
+    <tr><td>平均戰鬥回合數（全部）</td><td>${avg(rs,r=>r.round).toFixed(1)} 回合</td></tr>
+    <tr><td>勝場平均剩餘 HP</td><td>${avg(wins,r=>r.heroHp).toFixed(1)} / ${hpMax}（${hpMax?(avg(wins,r=>r.heroHp)/hpMax*100).toFixed(0):0}%）</td></tr>
+    <tr><td>平均對敵輸出／場</td><td>${avg(rs,r=>r.dmgDealt).toFixed(0)}</td></tr>
+    <tr><td>玩家平均承傷／場</td><td>${avg(rs,r=>r.dmgTaken).toFixed(0)}</td></tr>`;
+  $("#sim-box").style.display="block";
+  $("#apply-hint").textContent="已套用並完成模擬";
+});
+
+/* ================= 初始化 ================= */
+applyOutfit();
+renderHeroStats(); renderMates(); renderItems(); renderSpells(); renderOutfitPane();
+renderGeneral(); renderEditors();
+</script>
+</body>
+</html>
