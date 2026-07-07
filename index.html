@@ -248,6 +248,16 @@ h1.title{font-family:var(--serif);font-weight:900;font-size:26px;letter-spacing:
 .party-command{display:flex;flex-direction:column}
 .party-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:12px 16px}
 .pc-card{border:1px solid var(--line);border-radius:5px;background:rgba(34,26,20,.85);padding:10px 12px;transition:.15s;position:relative}
+.pc-card .prow{display:flex;gap:10px;align-items:stretch}
+.pc-card .pava{
+  width:48px;flex:none;border:1px solid var(--line);border-radius:4px;align-self:stretch;min-height:64px;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--serif);font-weight:900;font-size:22px;
+  background:radial-gradient(ellipse at 50% 85%,rgba(201,55,44,.14),transparent 70%),var(--panel2);
+  overflow:hidden;
+}
+.pc-card .pava img{width:100%;height:100%;object-fit:cover}
+.pc-card .pmain{flex:1;min-width:0}
 .pc-card .top{display:flex;align-items:center;gap:7px;margin-bottom:7px}
 .pc-card .top .nm{font-weight:700;font-size:14px;letter-spacing:.05em}
 .pc-card .top .you{font-size:10px;color:var(--ink);background:var(--gold);padding:0 6px;border-radius:2px;letter-spacing:.1em}
@@ -310,30 +320,50 @@ h1.title{font-family:var(--serif);font-weight:900;font-size:26px;letter-spacing:
 .smoke{position:absolute;bottom:0;left:50%;width:2px;height:70px;background:linear-gradient(180deg,transparent,rgba(167,156,139,.25));filter:blur(2px);animation:smoke 4s infinite}
 @keyframes smoke{0%{transform:translateX(-50%) scaleY(.4);opacity:0}40%{opacity:1}100%{transform:translateX(-46%) scaleY(1.2);opacity:0}}
 
-/* ============ QTE Overlay ============ */
-.qte-box{text-align:center;width:min(600px,92vw)}
+/* ============ QTE Overlay（按鍵序列版） ============ */
+.qte-box{text-align:center;width:min(640px,94vw)}
 .qte-label{font-size:12px;letter-spacing:.5em;color:var(--ash);text-indent:.5em;margin-bottom:4px}
-.qte-name{font-family:var(--serif);font-weight:900;font-size:26px;letter-spacing:.25em;color:var(--gold-pale);margin-bottom:30px}
-.qte-track{position:relative;height:44px;border:2px solid var(--line);border-radius:22px;background:#14100c;overflow:hidden;transition:border-color .1s,box-shadow .1s}
-.qte-track.in-zone{border-color:var(--cinnabar-hi);box-shadow:0 0 24px rgba(232,96,63,.55)}
-.qte-zone{position:absolute;top:0;bottom:0;background:rgba(201,55,44,.4);border-left:2px solid var(--cinnabar-hi);border-right:2px solid var(--cinnabar-hi)}
-.qte-zone.perfect{background:rgba(212,162,78,.6);border-color:var(--gold)}
-.qte-needle{position:absolute;top:-6px;bottom:-6px;left:0;width:5px;background:var(--gold-pale);box-shadow:0 0 14px rgba(241,220,168,1);border-radius:3px;will-change:transform}
+.qte-name{font-family:var(--serif);font-weight:900;font-size:24px;letter-spacing:.25em;color:var(--gold-pale);margin-bottom:8px}
 #qte-overlay{backdrop-filter:none;background:rgba(12,9,7,.94)}
-.qte-ready{margin-top:14px;font-family:var(--serif);font-weight:900;font-size:26px;letter-spacing:.4em;text-indent:.4em;color:var(--ash);min-height:38px}
+/* 序列進度點 */
+.qte-seq{display:flex;gap:10px;justify-content:center;margin:18px 0 26px;min-height:16px}
+.qte-seq i{width:14px;height:14px;border-radius:50%;border:1px solid var(--line);background:#14100c;transition:.2s}
+.qte-seq i.cur{border-color:var(--gold);box-shadow:0 0 10px rgba(212,162,78,.5)}
+.qte-seq i.ok{background:var(--gold);border-color:var(--gold)}
+.qte-seq i.ng{background:#4a2620;border-color:var(--cinnabar)}
+.qte-seq i.mash{border-radius:3px}
+/* 中央鍵符 */
+.qte-key-wrap{position:relative;width:150px;height:150px;margin:0 auto}
+.qte-key{
+  position:absolute;inset:10px;border:3px solid var(--line);border-radius:14px;background:#14100c;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--serif);font-weight:900;font-size:64px;color:var(--gold-pale);
+  transition:border-color .1s,box-shadow .1s,transform .1s;user-select:none;
+}
+.qte-key.armed{border-color:var(--gold);box-shadow:0 0 26px rgba(212,162,78,.4)}
+.qte-key.ok{border-color:var(--ok);color:var(--ok);box-shadow:0 0 30px rgba(143,174,106,.6)}
+.qte-key.ng{border-color:var(--cinnabar);color:var(--cinnabar-hi);box-shadow:0 0 30px rgba(201,55,44,.55);animation:shake .3s}
+.qte-key.mash-key{cursor:pointer}
+.qte-key.mash-key:active{transform:scale(.94)}
+/* 倒數環 */
+.qte-ring{position:absolute;inset:0;transform:rotate(-90deg)}
+.qte-ring circle{fill:none;stroke-width:5}
+.qte-ring .bg{stroke:var(--line-soft)}
+.qte-ring .fg{stroke:var(--cinnabar-hi);stroke-linecap:round;transition:none}
+/* 連打計數 */
+.qte-mash-count{font-family:var(--serif);font-weight:900;font-size:22px;color:var(--gold-pale);margin-top:12px;letter-spacing:.15em;min-height:30px}
+.qte-mash-count b{font-size:30px;color:var(--cinnabar-hi)}
+/* 行動裝置四鍵盤 */
+.qte-pad{display:flex;gap:12px;justify-content:center;margin-top:22px}
+.qte-pad button{
+  width:58px;height:58px;border:1px solid var(--line);border-radius:8px;background:var(--panel);
+  font-family:var(--serif);font-weight:900;font-size:22px;color:var(--ash);transition:.12s;
+}
+.qte-pad button:active{transform:scale(.92);border-color:var(--gold);color:var(--gold-pale)}
+.qte-ready{margin-top:14px;font-family:var(--serif);font-weight:900;font-size:22px;letter-spacing:.4em;text-indent:.4em;color:var(--ash);min-height:34px}
 .qte-ready.go{color:var(--cinnabar-hi);animation:hitpulse .5s infinite}
 @keyframes hitpulse{50%{transform:scale(1.15)}}
-.qte-strike{
-  margin-top:26px;width:150px;height:150px;border-radius:50%;
-  border:3px solid var(--line);background:radial-gradient(circle at 50% 38%,var(--panel2),var(--panel));
-  font-family:var(--serif);font-weight:900;font-size:24px;letter-spacing:.3em;text-indent:.3em;color:var(--ash);
-  transition:transform .06s, border-color .1s, box-shadow .1s, color .1s;
-  touch-action:manipulation; user-select:none;
-}
-.qte-strike:active{transform:scale(.93)}
-.qte-strike.armed{border-color:var(--gold);color:var(--gold-pale)}
-.qte-strike.go{border-color:var(--cinnabar-hi);color:#fff;background:radial-gradient(circle at 50% 38%,rgba(201,55,44,.5),var(--panel));box-shadow:0 0 40px rgba(232,96,63,.7);animation:hitpulse .5s infinite}
-.qte-action{margin-top:26px;font-size:13px;color:var(--ash);letter-spacing:.2em}
+.qte-action{margin-top:22px;font-size:13px;color:var(--ash);letter-spacing:.2em}
 .qte-action b{color:var(--gold-pale);border:1px solid var(--gold);padding:2px 14px;border-radius:3px;margin:0 6px;font-weight:500}
 .qte-verdict{margin-top:18px;font-family:var(--serif);font-weight:900;font-size:34px;letter-spacing:.35em;text-indent:.35em;opacity:0;transition:.2s}
 .qte-verdict.show{opacity:1}
@@ -461,7 +491,7 @@ h1.title{font-family:var(--serif);font-weight:900;font-size:26px;letter-spacing:
         <div class="prep-pane active" id="pane-squad">
           <div class="squad-count">同時在場隊友 <b id="squad-n">2</b> / 3 · 點擊卡片切換出戰，點「檢視」展開數值</div>
           <div class="mate-list" id="mate-list"></div>
-          <div class="note-line">入隊的隊友於戰鬥中自動進行武藝／靈術判定並輔助攻擊，無法直接操控；隊友以 QTE 折算比例計算加成（流程圖為玩家 QTE 之一半，可於「數值測試」頁調整）。</div>
+          <div class="note-line">入隊的隊友於戰鬥中自動輔助攻擊，無法直接操控；隊友不進行 QTE，改以「固定 S 值」（預設 0.7，可於「數值測試」頁依角色個別調整）代入傷害公式。</div>
         </div>
 
         <!-- 服裝 -->
@@ -552,14 +582,24 @@ h1.title{font-family:var(--serif);font-weight:900;font-size:26px;letter-spacing:
     <h1 class="title">UX 決策與規格對照</h1>
     <div class="subtitle">給團隊看的重點摘要，對照《戰鬥系統》文件逐項落地。</div>
 
-    <h2>整體節奏設計</h2>
-    <p>玩家一回合的體感節奏設計為：<b>選指令 → 選目標 → 擲筊儀式（全螢幕）→ QTE → 結算</b>。擲筊做成全螢幕儀式化演出，是整套戰鬥的記憶點——它同時解決「界面不顯示具體數值，只顯示結果等級」的規格要求：畫面上永遠只出現叠杯／聖杯／哭杯／立杯四種結果，不出現 1–20 的數字。</p>
+    <h2>整體節奏設計（對齊《戰鬥系統運算 1.0》）</h2>
+    <p>玩家一回合的體感節奏為：<b>選指令 → 選目標 → QTE 按鍵序列（全螢幕）→ 結算</b>。本版依運算文件調整：<b>是否進攻成功不再由武藝問杯判定</b>（測試中發現前期成功率過低、連續進攻失敗造成負反饋），改由 QTE 成功個數與總數計算 S 值——即使全部失手仍有 S=0.15 的保底輸出，武藝只影響最終傷害的基礎值 B。擲筊問杯保留於靈術檢定與逃跑檢定，仍是招牌儀式演出；防守方的閃避四級判定（大成功／成功／失敗／大失敗）也沿用同一套骰法，對應公式中的 DC 係數。</p>
+
+    <h2>判定與傷害公式（《戰鬥系統運算 1.0》）</h2>
+    <ul>
+      <li><b>S 值</b>：S = 0.15 + 0.8 ×（n／N）^0.55，n 為 QTE 成功個數、N 為 QTE 總數。隊友與敵人不做 QTE，使用固定 S（預設 0.7，每個角色可個別覆寫——回應運算文件中「可否做成變量」的註記，原型已做成逐角色欄位）。</li>
+      <li><b>玩家</b>：Damage = B/20 × {[M(1−e^(−K·S))·R] − Def} × DC × F × N。F 與 N 兩個係數文件未附定義，原型暫置 1 並開放於調參台調整。</li>
+      <li><b>隊友／敵人</b>：Damage = B/20 × {[M(1−e^(−K·S))·R] − Def} × DC × T，T 為逐角色暗調參數。</li>
+      <li><b>R 克制</b>：天→地→人→鬼→天，克制 ×1.3、被克制 ×0.7、對位與同位 ×1。</li>
+      <li><b>DC 閃避</b>：防守方輕捷四級判定，大失敗 1.5／失敗 1／成功 0.5／大成功 0（全閃）。</li>
+      <li><b>取整與保底</b>：傷害向下取整；因護甲導致 ≤0 時調整至 1（閃避大成功除外，仍為 0）。</li>
+    </ul>
 
     <h2>資訊揭露層級（規格 3 節）</h2>
     <ul>
-      <li><b>玩家</b>：完整顯示問杯結果等級 + 傷害結算。<span class="spec">→「僅顯示玩家自己的問杯結果」</span></li>
+      <li><b>玩家</b>：完整顯示 QTE 成功數（n／N）與傷害結算；靈術／逃跑仍完整演出問杯結果等級。<span class="spec">→「僅顯示玩家自己的問杯結果」</span></li>
       <li><b>隊友／敵方</b>：日誌只出現一行結算（例：隊友A的攻擊 → 造成 14 傷害），不演出問杯。<span class="spec">→「隊友/敵方直接體現傷害結算」，維持節奏</span></li>
-      <li><b>敵方屬性</b>：不顯示 HP 數值，改用五格傷勢燈 + 傷勢文字（無傷／輕傷／重傷／瀕死），玩家有回饋但拿不到數據。<span class="spec">→「不可查看敵方屬性」</span></li>
+      <li><b>敵方屬性</b>：不顯示 HP 數值，改用五格傷勢燈 + 傷勢文字（無傷／輕傷／重傷／瀕死）；名牌僅額外標示等級（Lv1–5，玩家可藉此預期 QTE 難度）。<span class="spec">→「不可查看敵方屬性」</span></li>
       <li><b>身份克制</b>：敵我名牌旁常駐天／地／人／鬼圓章。進入戰鬥即揭曉並記錄（開戰 toast 提示「敵人A身份已記錄」），呼應社交頁解鎖條件 2。</li>
     </ul>
 
@@ -574,21 +614,24 @@ h1.title{font-family:var(--serif);font-weight:900;font-size:26px;letter-spacing:
     <h2>SAN 作為資源的 UI 表達</h2>
     <p>SAN 條使用陰青色與 HP 朱紅區隔；靈術子選單上每個技能直接標示 <b>SAN −n</b>，理智不足的技能按鈕反灰並註明原因。因 SAN 幾乎不可回復，介面上刻意讓消耗「很貴」的感覺可見。</p>
 
-    <h2>QTE</h2>
-    <p>原型採計時軌道（點擊／空白鍵停針）：金色窄區 = 完美、朱紅寬區 = 命中、其餘 = 失誤，對應「按中與沒按中的效果」。實作時 QTE 形式依敵人類型替換（規格 2-C），軌道版可作為通用 fallback。加成倍率、持續回合等數值以《戰鬥系統運算文件》為準，原型內僅為示意值。</p>
+    <h2>QTE（按鍵序列版）</h2>
+    <p>依運算文件重做：不再是「拍在規定區間」的軌道式，而是<b>依底部規律連續出鍵</b>——隨機給出 WASD（方向鍵 ↑←↓→ 自動映射，行動裝置有四鍵盤與可點按鍵符），每個鍵有獨立輸入窗口，窗口內按對＝Success，按錯／超時／搶按＝Miss。QTE 總數依<b>敵人等級（1–5）</b>的權重表抽取（1–7 個）；4／5 級敵人有 30%／50% 機率把最後一個換成<b>連打 QTE</b>（時限內連按同鍵達目標次數）。窗口秒數、數量權重、連打參數全部收在「數值測試 → QTE 等級表」，對照運算文件可直接調。</p>
+    <p><b>音樂節拍框架</b>：文件要求 QTE 節奏跟隨戰鬥音樂。音樂尚未製作，原型先以 BPM 參數（預設 120）留出框架——每個 QTE 之間的間隔＝60/BPM × 隨機取 1 拍／½ 拍／¼ 拍；之後音樂節點的 DAW 檔到位，把隨機間隔換成讀取節點時間即可，判定邏輯不需要動。</p>
 
     <h2>逃跑與自動戰鬥</h2>
     <ul>
-      <li><b>逃跑</b>走同一套問杯儀式（檢定身法），成功即脫離戰鬥，維持機制一致性。</li>
-      <li><b>自動戰鬥</b>為切換態：頂列出現紅色「自動戰鬥中」呼吸燈，再點一次解除。自動模式下 QTE 改為隨機模擬檢定（機率可於數值測試頁調整）並縮短演出，供刷怪／低壓力場景使用。</li>
+      <li><b>逃跑</b>走問杯儀式（檢定輕捷），成功即脫離戰鬥，維持擲筊機制的存在感。</li>
+      <li><b>自動戰鬥</b>為切換態：頂列出現紅色「自動戰鬥中」呼吸燈，再點一次解除。自動模式下 QTE 依實際生成規則產生序列，但每個 QTE 以「命中機率」（預設 0.7，可調）隨機抽樣並跳過演出，供刷怪／低壓力場景使用。</li>
     </ul>
 
-    <h2>待接運算文件的參數（原型內為佔位值）</h2>
+    <h2>待接運算文件的部分（原型內為佔位或簡化）</h2>
     <ul>
-      <li>QTE 加成倍率、隊友 QTE 折算比例的實際換算</li>
-      <li>叠杯／立杯的正負面額外效果內容</li>
-      <li>閃避、命中公式；克制傷害成長曲線</li>
-      <li>敵方 AI 目標選擇權重</li>
+      <li>玩家公式中的 F、N 兩個係數：文件未附定義，暫置 1 可調，待企劃補充</li>
+      <li>QTE 間隔的音樂節點 DAW 檔（現以 BPM 隨機拍值代替）</li>
+      <li>Boss 級敵人的專門 QTE 設計（現與一般敵人共用等級表隨機生成）</li>
+      <li>「每輪行動順序依全體輕捷個別排序（同值時玩家＞隊友＞敵人）」——原型仍為玩家→隊友→敵方的整段回合制，個體先攻序列待下一版接入</li>
+      <li>嘲諷屬性（在場必須優先攻擊）尚未實作</li>
+      <li>叠杯／立杯的正負面額外效果內容（靈術檢定用）</li>
     </ul>
   </div>
 </section>
@@ -602,6 +645,9 @@ h1.title{font-family:var(--serif);font-weight:900;font-size:26px;letter-spacing:
   <div class="subtitle">結算邏輯已對齊《戰鬥流程圖》。改完按「套用設定」，於下一場戰鬥生效；「批次模擬」可不看演出直接跑上千場統計勝率。</div>
 
   <div class="tune-grid" id="tune-grid"></div>
+
+  <div class="ent-head"><h2>QTE 等級表（窗口／數量權重／連打——對照《戰鬥系統運算 1.0 · QTE 相關》）</h2></div>
+  <div class="tune-grid" id="qte-tune"></div>
 
   <div class="ent-head"><h2>角色（隊友）</h2><button class="btn ghost sm" id="add-mate">＋ 新增角色</button></div>
   <div class="tune-grid" id="ent-mates"></div>
@@ -639,7 +685,7 @@ h1.title{font-family:var(--serif);font-weight:900;font-size:26px;letter-spacing:
   <div class="card sim-box" id="sim-box" style="display:none">
     <h3>模擬結果</h3>
     <table class="sim-table" id="sim-table"></table>
-    <div class="sim-note">模擬採用「自動戰鬥」策略：玩家每回合以武藝行動，QTE 依上方機率隨機抽樣；先後手由開場輕捷判定決定；隊友依折算比例計算 QTE 加成；防守方輕捷四級判定（大成功全閃／成功半傷／失敗全傷／大失敗 ×倍率）。出戰序列與關卡事件（麻痺／全體傷害／增援／敵方回復）均已納入模擬。80 回合未分勝負計為「僵局」。</div>
+    <div class="sim-note">模擬採用「自動戰鬥」策略：玩家每回合以武藝行動，QTE 依目標敵人等級實際生成序列後以命中機率逐個抽樣；傷害走《戰鬥系統運算 1.0》公式（S 曲線、克制 R、閃避 DC、護甲 Def、保底 1 傷）；隊友／敵人以固定 S × T 結算；先後手由開場輕捷判定決定。出戰序列與關卡事件（麻痺／全體傷害／增援／敵方回復）均已納入模擬。80 回合未分勝負計為「僵局」。</div>
   </div>
 </section>
 
@@ -661,18 +707,24 @@ h1.title{font-family:var(--serif);font-weight:900;font-size:26px;letter-spacing:
   </div>
 </div>
 
-<!-- ============ QTE Overlay ============ -->
+<!-- ============ QTE Overlay（按鍵序列版） ============ -->
 <div class="overlay" id="qte-overlay">
   <div class="qte-box">
-    <div class="qte-label">追　擊</div>
+    <div class="qte-label">連　擊</div>
     <div class="qte-name" id="qte-name">基本攻擊</div>
-    <div class="qte-track" id="qte-track">
-      <div class="qte-zone" id="qte-zone-hit"></div>
-      <div class="qte-zone perfect" id="qte-zone-perfect"></div>
-      <div class="qte-needle" id="qte-needle"></div>
+    <div class="qte-seq" id="qte-seq"></div>
+    <div class="qte-key-wrap">
+      <svg class="qte-ring" viewBox="0 0 150 150">
+        <circle class="bg" cx="75" cy="75" r="70"></circle>
+        <circle class="fg" id="qte-ring-fg" cx="75" cy="75" r="70" stroke-dasharray="439.8" stroke-dashoffset="0"></circle>
+      </svg>
+      <div class="qte-key" id="qte-key">Ｗ</div>
     </div>
-    <div class="qte-action">指針進入 <b style="border-color:var(--cinnabar);color:var(--cinnabar-hi)">紅區</b> 時按下方大鈕（或點畫面任意處／空白鍵）· 金色窄區為完美</div>
-    <button class="qte-strike" id="qte-strike">拍　擊</button>
+    <div class="qte-mash-count" id="qte-mash-count"></div>
+    <div class="qte-pad" id="qte-pad">
+      <button data-k="W">W</button><button data-k="A">A</button><button data-k="S">S</button><button data-k="D">D</button>
+    </div>
+    <div class="qte-action" id="qte-action">於倒數圈歸零前按下對應鍵（鍵盤 <b>W A S D</b> 或點下方按鈕）· 按錯／超時／搶按皆為失誤</div>
     <div class="qte-ready" id="qte-ready">準　備</div>
     <div class="qte-verdict" id="qte-verdict"></div>
   </div>
@@ -703,21 +755,43 @@ h1.title{font-family:var(--serif);font-weight:900;font-size:26px;letter-spacing:
 <script>
 /* ================= 可調參數（企劃調參台） ================= */
 const CFG_DEFAULT = {
-  playerAtkMin:16, playerAtkMax:24,     // 玩家武藝基礎傷害
-  qtePerfect:1.5, qteHit:1.25,          // QTE 加成倍率
-  critMul:1.5,                          // 叠杯（大成功）倍率【暫定】
-  counterMul:1.3,                       // 克制倍率
-  evadeFumbleMul:1.5,                   // 防守方輕捷大失敗 → 承受 atk×此倍率（流程圖 =atk*1.5【暫定】）
-  fumbleSelfDmg:6,                      // 玩家立杯負面效果：反噬傷害（0 = 依流程圖不造成任何效果）
-  mateAtkMin:8, mateAtkMax:15,          // 隊友基礎傷害
-  mateQteRatio:0.5,                     // 隊友 QTE 折算比例（流程圖=一半；舊規格=0.7）
-  simQtePerfect:0.2, simQteHit:0.5,     // 自動戰鬥／批次模擬的 QTE 抽樣機率
+  /* ---- 傷害公式（《戰鬥系統運算 1.0》） ----
+     玩家：Damage = B/20 × {[M(1−e^(−K·S))·R] − Def} × DC × F × Nf
+     隊友／敵人：Damage = B/20 × {[M(1−e^(−K·S))·R] − Def} × DC × T
+     B=武藝　S=由 QTE 成功數計算（隊友/敵人為固定值）　保底 1 傷（護甲壓成 0/負時） */
+  M:200,                                // M 最大傷害（上限係數，防止數值膨脹）
+  K:0.7,                                // K 增長速率（K 越大 QTE 影響越小）
+  sBase:0.15, sScale:0.8, sPow:0.55,    // S = sBase + sScale×(n/N)^sPow
+  pF:1, pNf:1,                          // 玩家公式的 F、N 係數（文件未附定義，暫置 1）
+  counterMul:1.3, counteredMul:0.7,     // R：克制 1.3／被克制 0.7／其他 1
+  dcOk:0.5, dcFumble:1.5,               // DC：閃避 大成功0／成功0.5／失敗1／大失敗1.5
+  npcS:0.7,                             // 隊友／敵人固定 S 預設值（各角色可個別覆寫）
+  critMul:1.5,                          // 叠杯（大成功）倍率——現僅用於靈術等問杯檢定
+  qteBpm:120,                           // QTE 節拍框架：間隔 = 60/BPM × 隨機{1, 1/2, 1/4}拍（音樂節點檔到位後替換）
+  simQteHitRate:0.7,                    // 自動戰鬥／批次模擬：單個 QTE 命中機率
 };
 let CFG = JSON.parse(JSON.stringify(CFG_DEFAULT));
 
-/* ---- 克制：天→地→人→鬼→天 ---- */
+/* ---- QTE 等級表（《戰鬥系統運算 1.0 · QTE 相關》）----
+   win：單次 QTE 輸入窗口（秒）
+   weights：QTE 總數抽取權重（"數量:權重" 逗號分隔）
+   mashP：生成連打 QTE 的機率（僅 4／5 級允許）
+   mashT／mashN：連打時限（秒）／目標按擊次數
+   連打固定為最後一個；若生成連打：普通數 = N_base − 2、最終 N = 普通數 + 1 */
+const QTE_TABLE_DEFAULT = {
+  1:{win:1.2,  weights:"1:60,2:40",      mashP:0,   mashT:2.0, mashN:5},
+  2:{win:1.0,  weights:"3:50,4:35,5:15", mashP:0,   mashT:2.0, mashN:7},
+  3:{win:0.85, weights:"3:30,4:45,5:25", mashP:0,   mashT:1.8, mashN:8},
+  4:{win:0.7,  weights:"3:15,4:35,5:50", mashP:0.3, mashT:1.6, mashN:9},
+  5:{win:0.55, weights:"5:30,6:40,7:30", mashP:0.5, mashT:1.5, mashN:10},
+};
+let QTE_TABLE = JSON.parse(JSON.stringify(QTE_TABLE_DEFAULT));
+const LV_NAMES = {1:"教學／前期",2:"普通",3:"精英小怪",4:"小 Boss",5:"大 Boss"};
+
+/* ---- 克制：天→地→人→鬼→天（克制 ×1.3／被克制 ×0.7／其他 ×1） ---- */
 const COUNTERS = {天:"地", 地:"人", 人:"鬼", 鬼:"天"};
 const isCounter = (att,def)=>COUNTERS[att]===def;
+const counterR = (att,def)=> isCounter(att,def)?CFG.counterMul : isCounter(def,att)?CFG.counteredMul : 1;
 const IDN_LIST = ["天","地","人","鬼"];
 
 /* ================= 資料（皆可於調參台增刪改） ================= */
@@ -730,6 +804,7 @@ const hero = {
   stats:{...STAT_DEFAULT},
   outfit:{def:3, buff:{靈術:1}},
   hp:70, hpMax:70, san:12, sanMax:12
+  // 頭像：戰鬥卡片以名稱首字為佔位，之後可換角色立繪
 };
 function syncHeroVitals(){ hero.hpMax=hero.stats.體魄*5; hero.hp=hero.hpMax; hero.sanMax=hero.stats.意志; hero.san=hero.sanMax; }
 syncHeroVitals();
@@ -750,14 +825,29 @@ function hydrateMate(m){
   x.hpMax=x.stats.體魄*5; x.hp=x.hpMax;
   x.sanMax=x.stats.意志; x.san=x.sanMax;
   x.avatar=(x.name||"？")[0];
+  if(x.sFix==null) x.sFix=CFG_DEFAULT.npcS;   // 固定 S（運算文件註記：可依各角色做成變量）
+  if(x.T==null) x.T=1;                        // T 暗調參數
   return x;
 }
 let mates = MATES_DEFAULT.map(hydrateMate);
 
+/* 怪物欄位（新公式）：art=武藝 B、defV=護甲 Def、agiP=輕捷（閃避 DC 判定）、
+   lv=敵人等級 1–5（決定 QTE 窗口／數量／連打）、T=暗調參數、sFix=固定 S */
 const MONSTERS_DEFAULT = [
-  {id:"mon1", name:"敵人A", idn:"鬼", hp:120, atkMin:10, atkMax:18, hitP:12, agiP:8},
+  {id:"mon1", name:"敵人A", idn:"鬼", hp:320, art:10, defV:0, agiP:8, lv:2, T:1, sFix:0.7},
 ];
-let monsters = MONSTERS_DEFAULT.map(m=>({...m}));
+function hydrateMonster(m){
+  const x={...m};
+  if(x.art==null)  x.art = x.atkMax!=null ? Math.round((x.atkMin+x.atkMax)/2) : 10; // 舊檔遷移
+  if(x.defV==null) x.defV=0;
+  if(x.lv==null)   x.lv=2;
+  if(x.T==null)    x.T=1;
+  if(x.sFix==null) x.sFix=CFG_DEFAULT.npcS;
+  x.lv=Math.max(1,Math.min(5,Math.round(x.lv)));
+  delete x.atkMin; delete x.atkMax; delete x.hitP;
+  return x;
+}
+let monsters = MONSTERS_DEFAULT.map(hydrateMonster);
 
 /* ---- 關卡編成：出戰序列（= 敵方行動順序）與回合事件 ---- */
 const EVENT_TYPES = {paralyze:"玩家麻痺", aoe:"我方全體傷害", reinforce:"敵方增援", enemyHeal:"敵方全體回復", msg:"劇情訊息"};
@@ -935,13 +1025,24 @@ function poeRoll(P){
   if(x<=19) return "fail";
   return "fumble";
 }
-/* ---- 流程圖：防守方輕捷四級判定 ---- */
-function evadeResolve(atk, defenderAgiP){
+/* ---- 防守方輕捷四級判定 → DC 係數（大成功0／成功0.5／失敗1／大失敗1.5） ---- */
+function dcResolve(defenderAgiP){
   const t = poeRoll(defenderAgiP);
-  if(t==="crit")   return {dmg:0, tier:t, txt:"被完全閃過"};
-  if(t==="ok")     return {dmg:Math.round(atk/2), tier:t, txt:"被閃過半數"};
-  if(t==="fail")   return {dmg:atk, tier:t, txt:""};
-  return {dmg:Math.round(atk*CFG.evadeFumbleMul), tier:t, txt:"對方閃避大失敗"};
+  if(t==="crit")   return {dc:0,            tier:t, txt:"被完全閃過"};
+  if(t==="ok")     return {dc:CFG.dcOk,     tier:t, txt:"被閃過半數"};
+  if(t==="fail")   return {dc:1,            tier:t, txt:""};
+  return {dc:CFG.dcFumble, tier:t, txt:"對方閃避大失敗"};
+}
+
+/* ---- 傷害公式（《戰鬥系統運算 1.0》） ---- */
+function calcS(n,N){ return CFG.sBase + CFG.sScale*Math.pow(N>0?n/N:0, CFG.sPow); }
+function coreDamage(B,S,R,Def,DC,extra){
+  // Damage = B/20 × {[M(1−e^(−K·S))·R] − Def} × DC × extra（extra = F×Nf 或 T）
+  if(DC<=0) return 0;                       // 閃避大成功 → 全閃
+  const raw = B/20 * ((CFG.M*(1-Math.exp(-CFG.K*S))*R) - Def) * DC * extra;
+  let d = Math.floor(raw);                  // 文件：小數暫定向下取整
+  if(d<1) d=1;                              // 文件：護甲導致 ≤0 時調整至 1
+  return d;
 }
 const COUNTER_TAG = ` <span style="color:var(--gold);font-size:11px">克制</span>`;
 
@@ -1031,7 +1132,7 @@ function buildEnemyZone(){
     <div class="enemy-unit" data-eid="${e.idx}">
       <div class="enemy-sprite">${ENEMY_SVG(size)}</div>
       <div class="enemy-plate">
-        <div class="enm"><span class="badge-id id-${e.idn}">${e.idn}</span>${esc(e.name)}</div>
+        <div class="enm"><span class="badge-id id-${e.idn}">${e.idn}</span>${esc(e.name)}<span style="font-size:10px;color:var(--ash-dim);letter-spacing:.1em;font-family:var(--sans);font-weight:400">Lv${e.def.lv||2}</span></div>
         <div class="enemy-cond">
           <div class="cond-pips"></div>
           <span class="cond-text">無　傷</span>
@@ -1055,20 +1156,25 @@ function renderParty(){
   const units = [ {...battle.hero, you:true}, ...battle.mates ];
   $("#party-row").innerHTML = units.map(u=>`
     <div class="pc-card ${u.hp<=0?"down":""}" data-id="${u.id}">
-      <div class="top">
-        <span class="badge-id id-${u.idn}">${u.idn}</span>
-        <span class="nm">${esc(u.name)}</span>
-        ${u.you?'<span class="you">你</span>':""}
-      </div>
       <button class="stat-link" data-sheet="${u.id}">屬性</button>
-      <div class="bars">
-        <div>
-          <div class="bar-label"><span>HP</span><b>${Math.max(0,u.hp)} / ${u.hpMax}</b></div>
-          <div class="bar hp"><i style="transform:scaleX(${Math.max(0,u.hp/u.hpMax)})"></i></div>
-        </div>
-        <div>
-          <div class="bar-label"><span>SAN</span><b>${u.san} / ${u.sanMax}</b></div>
-          <div class="bar san"><i style="transform:scaleX(${u.san/u.sanMax})"></i></div>
+      <div class="prow">
+        <div class="pava" style="color:${idnColor(u.idn)}" title="頭像位（之後替換為角色立繪）">${esc(u.avatar||(u.name||"？")[0])}</div>
+        <div class="pmain">
+          <div class="top">
+            <span class="badge-id id-${u.idn}">${u.idn}</span>
+            <span class="nm">${esc(u.name)}</span>
+            ${u.you?'<span class="you">你</span>':""}
+          </div>
+          <div class="bars">
+            <div>
+              <div class="bar-label"><span>HP</span><b>${Math.max(0,u.hp)} / ${u.hpMax}</b></div>
+              <div class="bar hp"><i style="transform:scaleX(${Math.max(0,u.hp/u.hpMax)})"></i></div>
+            </div>
+            <div>
+              <div class="bar-label"><span>SAN</span><b>${u.san} / ${u.sanMax}</b></div>
+              <div class="bar san"><i style="transform:scaleX(${u.san/u.sanMax})"></i></div>
+            </div>
+          </div>
         </div>
       </div>
     </div>`).join("");
@@ -1132,85 +1238,168 @@ function poeShow(checkName, tier){
   });
 }
 
-/* ================= QTE ================= */
-function simQTE(){
-  const r=Math.random();
-  if(r<CFG.simQtePerfect) return "perfect";
-  if(r<CFG.simQtePerfect+CFG.simQteHit) return "hit";
-  return "miss";
-}
-function qteMul(q){ return q==="perfect"?CFG.qtePerfect : q==="hit"?CFG.qteHit : 1; }
+/* ================= QTE（按鍵序列版，依《戰鬥系統運算 1.0 · QTE 相關》） ================= */
+const QTE_KEYS = ["W","A","S","D"];   // 暫定 WASD（文件）；方向鍵自動映射 ↑←↓→
+const KEY_GLYPH = {W:"Ｗ",A:"Ａ",S:"Ｓ",D:"Ｄ"};
+const ARROW_MAP = {ArrowUp:"W",ArrowLeft:"A",ArrowDown:"S",ArrowRight:"D",
+                   KeyW:"W",KeyA:"A",KeyS:"S",KeyD:"D"};
 
-function runQTE(name){
+function qteLvCfg(lv){ return QTE_TABLE[Math.max(1,Math.min(5,Math.round(lv||2)))]; }
+function parseWeights(str){
+  return String(str||"3:100").split(",").map(s=>s.split(":").map(Number))
+    .filter(([n,w])=>n>=1&&w>0).map(([n,w])=>({n:Math.round(n),w}));
+}
+function pickWeighted(list){
+  const tot=list.reduce((s,x)=>s+x.w,0);
+  let r=Math.random()*tot;
+  for(const x of list){ if((r-=x.w)<=0) return x.n; }
+  return list[list.length-1].n;
+}
+/* 生成規則（文件步驟 1–7）：N_base 依權重 → 4/5 級依機率生成連打（固定最後一個）
+   → 普通數 = N_base−2、最終 N = 普通數+1 */
+function genQTESeq(lv){
+  const c=qteLvCfg(lv);
+  const nBase=pickWeighted(parseWeights(c.weights));
+  const mash = (lv>=4) && Math.random()<(c.mashP||0);
+  let seq;
+  if(mash){
+    const nNormal=Math.max(0,nBase-2);
+    seq=Array.from({length:nNormal},()=>({type:"key",key:QTE_KEYS[rnd(0,3)]}));
+    seq.push({type:"mash",key:QTE_KEYS[rnd(0,3)],limit:c.mashT,target:c.mashN});
+  } else {
+    seq=Array.from({length:nBase},()=>({type:"key",key:QTE_KEYS[rnd(0,3)]}));
+  }
+  return {seq, win:c.win, N:seq.length};
+}
+/* 節拍框架：間隔 = 60/BPM × 隨機{1, 1/2, 1/4}拍（之後改讀音樂節點 DAW 檔） */
+function beatGap(){ return 60/Math.max(30,CFG.qteBpm) * [1,0.5,0.25][rnd(0,2)] * 1000; }
+
+/* 自動戰鬥／模擬：以 simQteHitRate 對每個 QTE 抽樣，回傳 {n,N} */
+function simQTE(lv){
+  const {N}=genQTESeq(lv);
+  let n=0; for(let i=0;i<N;i++) if(Math.random()<CFG.simQteHitRate) n++;
+  return {n,N};
+}
+
+/* 實際互動 QTE 序列，回傳 {n,N} */
+function runQTE(name, lv){
   return new Promise(res=>{
+    const {seq,win}=genQTESeq(lv);
+    const N=seq.length;
     const ov=$("#qte-overlay"); $("#qte-name").textContent=name;
     const v=$("#qte-verdict"); v.classList.remove("show"); v.textContent="";
     const ready=$("#qte-ready"); ready.textContent="準　備"; ready.classList.remove("go");
-    const track=$("#qte-track"); track.classList.remove("in-zone");
-    const strike=$("#qte-strike"); strike.className="qte-strike";
-    const zoneW=24, perfW=7;
-    const zoneL=rnd(38,64);
-    const perfL=zoneL+(zoneW-perfW)/2;
-    const zh=$("#qte-zone-hit"), zp=$("#qte-zone-perfect");
-    zh.style.left=zoneL+"%"; zh.style.width=zoneW+"%";
-    zp.style.left=perfL+"%"; zp.style.width=perfW+"%";
-    const needle=$("#qte-needle");
-    needle.style.transform="translateX(0px)";
+    const keyEl=$("#qte-key"), ringFg=$("#qte-ring-fg");
+    const mashEl=$("#qte-mash-count"); mashEl.textContent="";
+    const seqEl=$("#qte-seq");
+    seqEl.innerHTML=seq.map(q=>`<i class="${q.type==="mash"?"mash":""}"></i>`).join("");
+    const dots=[...seqEl.children];
+    keyEl.className="qte-key"; keyEl.textContent="";
+    const CIRC=2*Math.PI*70;
+    ringFg.style.strokeDasharray=CIRC; ringFg.style.strokeDashoffset=0;
     ov.classList.add("show");
 
-    const PASS=900;              // 指針單趟時間（ms），時間基準 → 幀率無關
-    let trackW=0, startT=0, rafId=0;
-    let done=false, started=false, lastZone=false, toH=null;
-    const posAt=t=>{             // 三角波：0→100→0
-      const ph=((t-startT)%(PASS*2))/PASS;
-      return (ph<=1?ph:2-ph)*100;
-    };
-    function frame(t){
+    let idx=0, hits=0, done=false;
+    let phase="idle";              // idle | wait | mash
+    let cur=null, deadline=0, rafId=0, mashCount=0, timers=[];
+    const later=(fn,ms)=>{ const t=setTimeout(fn,ms); timers.push(t); return t; };
+
+    function ringFrame(){
       if(done) return;
-      if(!startT){ startT=t; trackW=track.clientWidth; }
-      const pos=posAt(t);
-      needle.style.transform=`translateX(${(pos/100*trackW).toFixed(1)}px)`; // transform 走 GPU 合成
-      const inZone = pos>=zoneL && pos<=zoneL+zoneW;
-      if(inZone!==lastZone){     // 僅在狀態改變時寫 DOM
-        lastZone=inZone;
-        track.classList.toggle("in-zone",inZone);
-        strike.classList.toggle("go",inZone);
-        ready.textContent=inZone?"按　！":"";
-        ready.classList.toggle("go",inZone);
+      const total = cur.type==="mash" ? cur.limit*1000 : win*1000;
+      const left = Math.max(0, deadline-performance.now());
+      ringFg.style.strokeDashoffset = CIRC*(1-left/total);
+      if(left<=0){ timeout(); return; }
+      rafId=requestAnimationFrame(ringFrame);
+    }
+    function showNext(){
+      if(idx>=N){ finish(); return; }
+      cur=seq[idx];
+      phase="idle";
+      keyEl.className="qte-key"; keyEl.textContent="";
+      ringFg.style.strokeDashoffset=CIRC;
+      dots.forEach((d,i)=>d.classList.toggle("cur",i===idx));
+      mashEl.textContent = cur.type==="mash" ? "連　打　準　備" : "";
+      later(()=>{                                 // 節拍間隔後開窗；間隔內搶按＝失誤
+        if(done) return;
+        phase = cur.type==="mash" ? "mash" : "wait";
+        mashCount=0;
+        keyEl.textContent=KEY_GLYPH[cur.key];
+        keyEl.className="qte-key armed"+(cur.type==="mash"?" mash-key":"");
+        if(cur.type==="mash"){
+          mashEl.innerHTML=`<b>0</b> ／ ${cur.target}　連按 ${cur.key}！`;
+          ready.textContent="連　打　！";
+        } else ready.textContent="";
+        ready.classList.add("go");
+        deadline=performance.now()+(cur.type==="mash"?cur.limit:win)*1000;
+        rafId=requestAnimationFrame(ringFrame);
+      }, beatGap());
+    }
+    function settle(ok){
+      cancelAnimationFrame(rafId);
+      phase="idle";
+      ready.classList.remove("go"); ready.textContent="";
+      dots[idx].classList.remove("cur");
+      dots[idx].classList.add(ok?"ok":"ng");
+      keyEl.classList.remove("armed");
+      keyEl.classList.add(ok?"ok":"ng");
+      if(ok) hits++;
+      idx++;
+      later(showNext, 260);
+    }
+    function timeout(){ settle(cur.type==="mash" ? mashCount>=cur.target : false); }
+    function press(k){
+      if(done) return;
+      if(phase==="idle"){                         // 提前輸入（文件：提前輸入＝Miss）
+        if(cur && idx<N && cur===seq[idx]) settleEarlyMiss(); // 僅當前題的預備間隔內搶按才判失誤
+        return;
       }
-      rafId=requestAnimationFrame(frame);
+      if(phase==="mash"){
+        if(k===cur.key){
+          mashCount++;
+          mashEl.innerHTML=`<b>${mashCount}</b> ／ ${cur.target}　連按 ${cur.key}！`;
+          keyEl.classList.remove("ok"); void keyEl.offsetWidth;
+          if(mashCount>=cur.target){ settle(true); }
+        }
+        return;                                   // 連打期間按錯鍵不中斷（僅不計數）
+      }
+      // phase === wait：窗口內按對＝成功；按錯＝失誤
+      settle(k===cur.key);
     }
-    function finish(result){
+    function settleEarlyMiss(){
+      // 間隔期間搶按：該題直接失誤（文件：提前輸入＝Miss）
+      timers.forEach(clearTimeout); timers=[];
+      keyEl.textContent=KEY_GLYPH[cur.key];
+      settle(false);
+    }
+    function finish(){
       if(done) return; done=true;
-      cancelAnimationFrame(rafId); clearTimeout(toH);
+      cancelAnimationFrame(rafId); timers.forEach(clearTimeout);
       document.removeEventListener("keydown",onKey,true);
-      document.removeEventListener("pointerdown",onTap,true);
-      track.classList.remove("in-zone"); ready.textContent="";
-      strike.className="qte-strike";
-      const map={perfect:["完　美","var(--gold)"],hit:["命　中","var(--cinnabar-hi)"],miss:["失　誤","var(--ash-dim)"]};
-      v.textContent=map[result][0]; v.style.color=map[result][1]; v.classList.add("show");
-      setTimeout(()=>{ ov.classList.remove("show"); res(result); },800);
+      $("#qte-pad").removeEventListener("pointerdown",onPad,true);
+      keyEl.removeEventListener("pointerdown",onKeyTap,true);
+      v.textContent=`${hits} ／ ${N}`;
+      v.style.color = hits===N?"var(--gold)": hits>0?"var(--cinnabar-hi)":"var(--ash-dim)";
+      v.classList.add("show");
+      ready.textContent = hits===N?"全　中":hits>0?"命　中":"失　手";
+      setTimeout(()=>{ ov.classList.remove("show"); res({n:hits,N}); },900);
     }
-    function judge(){
-      if(!started){ ready.textContent="尚未開始"; return; }
-      const pos=posAt(performance.now()); // 以輸入當下的時間戳判定，不受繪製延遲影響
-      if(pos>=perfL && pos<=perfL+perfW) finish("perfect");
-      else if(pos>=zoneL && pos<=zoneL+zoneW) finish("hit");
-      else finish("miss");
-    }
-    const onTap=e=>{ e.preventDefault(); judge(); };
-    const onKey=e=>{ if(e.code==="Space"||e.code==="Enter"){ e.preventDefault(); judge(); } };
-    document.addEventListener("pointerdown",onTap,true);
+    const onKey=e=>{
+      const k=ARROW_MAP[e.code]; if(!k) return;
+      e.preventDefault(); press(k);
+    };
+    const onPad=e=>{
+      const b=e.target.closest("[data-k]"); if(!b) return;
+      e.preventDefault(); press(b.dataset.k);
+    };
+    const onKeyTap=e=>{ if(phase==="mash"){ e.preventDefault(); press(cur.key); } };
     document.addEventListener("keydown",onKey,true);
-    setTimeout(()=>{
-      if(done) return;
-      started=true; ready.textContent="";
-      strike.classList.add("armed");
-      rafId=requestAnimationFrame(frame);
-      toH=setTimeout(()=>finish("miss"), PASS*4); // 兩個完整來回
-    }, 900);
+    $("#qte-pad").addEventListener("pointerdown",onPad,true);
+    keyEl.addEventListener("pointerdown",onKeyTap,true);
+    later(()=>{ ready.textContent=""; showNext(); }, 800);
   });
 }
+
 
 /* ================= 指令列 ================= */
 $("#cmd-bar").addEventListener("click",e=>{
@@ -1311,36 +1500,23 @@ function beginTargetAlly(cb){
   $("#party-row").addEventListener("click",handler);
 }
 
-/* ================= 玩家行動（依《戰鬥流程圖》） ================= */
+/* ================= 玩家行動（《戰鬥系統運算 1.0》：是否進攻成功改由 QTE 決定） ================= */
 async function playerArt(target){
-  const P = heroStat("武藝");
-  const tier = poeRoll(P);
-  await poeShow("武藝檢定 · 問杯", tier);
-  log(`你對${esc(target.name)}使出基本攻擊 —— ${TIER_HTML[tier]}`,"me");
-  if(tier==="fail"){ floatOn(target,"落空","miss"); }
-  else if(tier==="fumble"){
-    if(CFG.fumbleSelfDmg>0){
-      log(`立杯負面效果 —— 煞氣反噬，你受到 <span class="dmg">${CFG.fumbleSelfDmg}</span> 點傷害`,"me");
-      battle.hero.hp-=CFG.fumbleSelfDmg; renderParty();
-    } else {
-      log(`未造成傷害與效果`,"me");
-    }
-  } else {
-    const qte = autoMode ? simQTE() : await runQTE("基本攻擊 · 追擊");
-    let atk = rnd(CFG.playerAtkMin, CFG.playerAtkMax);
-    if(battle.hero.atkBuff) atk += battle.hero.atkBuff.val;
-    atk = Math.round(atk * qteMul(qte));
-    if(tier==="crit"){ atk=Math.round(atk*CFG.critMul); log(`叠杯正面效果 —— 本擊附加靈光，傷害躍升`,"me"); }
-    const counter = isCounter(hero.idn, target.idn);
-    if(counter) atk = Math.round(atk * CFG.counterMul);
-    const ev = evadeResolve(atk, target.def.agiP);
-    if(ev.dmg<=0){
-      floatOn(target,"閃避","miss");
-      log(`${esc(target.name)}身形一晃 —— 攻擊被完全閃過`,"me");
-    }else{
-      dealToEnemy(target, ev.dmg, tier==="crit"||ev.tier==="fumble");
-      log(`基本攻擊命中${qte!=="miss"?`（QTE ${qte==="perfect"?"完美":"命中"}）`:""}${ev.txt?`，${ev.txt}`:""} —— 對${esc(target.name)}造成 <span class="dmg">${ev.dmg}</span> 傷害${counter?COUNTER_TAG:""}`,"me");
-    }
+  const lv = target.def.lv || 2;
+  log(`你對${esc(target.name)}使出基本攻擊 —— 連擊開始`,"me");
+  const qte = autoMode ? simQTE(lv) : await runQTE(`基本攻擊 · 敵方等級 ${lv}`, lv);
+  const S = calcS(qte.n, qte.N);
+  const B = heroStat("武藝") + (battle.hero.atkBuff?battle.hero.atkBuff.val:0);
+  const R = counterR(hero.idn, target.idn);
+  const ev = dcResolve(target.def.agiP);           // 敵方閃避四級判定 → DC 係數
+  const dmg = coreDamage(B, S, R, target.def.defV||0, ev.dc, CFG.pF*CFG.pNf);
+  const qteTxt = `QTE ${qte.n}／${qte.N}`;
+  if(dmg<=0){
+    floatOn(target,"閃避","miss");
+    log(`${qteTxt} —— ${esc(target.name)}身形一晃，攻擊被完全閃過`,"me");
+  }else{
+    dealToEnemy(target, dmg, qte.n===qte.N||ev.tier==="fumble");
+    log(`基本攻擊命中（${qteTxt}${R>1?"，克制":R<1?"，被克制":""}）${ev.txt?`，${ev.txt}`:""} —— 對${esc(target.name)}造成 <span class="dmg">${dmg}</span> 傷害${R>1?COUNTER_TAG:""}`,"me");
   }
   await afterPlayer();
 }
@@ -1360,9 +1536,9 @@ async function playerSpell(sp, allyTarget, enemyTarget){
     if(sp.type==="dmg"){
       // 流程圖：靈術成功直接造成傷害和效果（無閃避判定）
       let dmg = rnd(sp.vmin, Math.max(sp.vmin, sp.vmax));
-      const counter = isCounter(hero.idn, enemyTarget.idn);
-      if(counter) dmg=Math.round(dmg*CFG.counterMul);
-      dmg=Math.round(dmg*mul);
+      const Rsp = counterR(hero.idn, enemyTarget.idn);   // 克制 1.3／被克制 0.7
+      const counter = Rsp>1;
+      dmg=Math.round(dmg*Rsp*mul);
       if(sp.stun>0) enemyTarget.stunned=Math.max(enemyTarget.stunned, Math.round(sp.stun));
       dealToEnemy(enemyTarget, dmg, tier==="crit");
       log(`【${esc(sp.name)}】灼燒${esc(enemyTarget.name)} —— 造成 <span class="dmg">${dmg}</span> 傷害${sp.stun>0?`，其行動被鎮住 ${Math.round(sp.stun)} 回合`:""}${counter?COUNTER_TAG:""}`,"me");
@@ -1423,37 +1599,29 @@ function dealToEnemy(en, dmg, crit){
   renderEnemies();
 }
 function dealToUnit(u, dmg){
+  // 護甲（Def）已於傷害公式中扣除，此處僅處理護盾
   if(u.shield&&u.shield>0){
     const ab=Math.min(u.shield,dmg); u.shield-=ab; dmg-=ab;
     if(ab>0) log(`護盾破裂 —— ${esc(u.name)} 抵擋 ${ab} 點傷害`,"sys");
   }
-  dmg=Math.max(0,dmg-(u.id==="hero"?battle.hero.def:0));
-  u.hp-=dmg; renderParty();
+  u.hp-=Math.max(0,dmg); renderParty();
   return dmg;
 }
 
 /* ================= 隊友／敵方行動 ================= */
 async function mateAct(m){
+  // 《戰鬥系統運算 1.0》隊友公式：B/20 × {[M(1−e^(−K·S))·R] − Def} × DC × T，S 為固定值（各角色可調）
   const useSpell = m.stats.靈術>m.stats.武藝;
-  const P = Math.max(m.stats.武藝, m.stats.靈術);
-  const tier=poeRoll(P);
-  if(tier==="fail"||tier==="fumble"){
-    log(`${esc(m.name)}的${useSpell?"靈術":"攻擊"}未能奏效`);
-    return;
-  }
   const alive=aliveEnemies(); if(!alive.length) return;
   const target=alive[rnd(0,alive.length-1)];
-  let atk = rnd(CFG.mateAtkMin, CFG.mateAtkMax);
-  if(m.atkBuff) atk += m.atkBuff.val;
-  const mateMul = 1 + (CFG.qtePerfect-1)*CFG.mateQteRatio;
-  atk = Math.round(atk*mateMul);
-  if(tier==="crit") atk=Math.round(atk*CFG.critMul);
-  const counter = isCounter(m.idn, target.idn);
-  if(counter) atk=Math.round(atk*CFG.counterMul);
-  const ev = evadeResolve(atk, target.def.agiP);
-  if(ev.dmg<=0){ log(`${esc(m.name)}的攻勢被${esc(target.name)}閃過`); return; }
-  dealToEnemy(target, ev.dmg, false);
-  log(`${esc(m.name)}${useSpell?"引動靈術":"揮刀突進"}${ev.txt?`，${ev.txt}`:""} —— 對${esc(target.name)}造成 <span class="dmg">${ev.dmg}</span> 傷害${counter?COUNTER_TAG:""}`);
+  const B = Math.max(m.stats.武藝, m.stats.靈術) + (m.atkBuff?m.atkBuff.val:0);
+  const S = m.sFix ?? CFG.npcS;
+  const R = counterR(m.idn, target.idn);
+  const ev = dcResolve(target.def.agiP);
+  const dmg = coreDamage(B, S, R, target.def.defV||0, ev.dc, m.T ?? 1);
+  if(dmg<=0){ log(`${esc(m.name)}的攻勢被${esc(target.name)}閃過`); return; }
+  dealToEnemy(target, dmg, ev.tier==="fumble");
+  log(`${esc(m.name)}${useSpell?"引動靈術":"揮刀突進"}${ev.txt?`，${ev.txt}`:""} —— 對${esc(target.name)}造成 <span class="dmg">${dmg}</span> 傷害${R>1?COUNTER_TAG:""}`);
 }
 
 async function enemyActOne(en){
@@ -1461,26 +1629,22 @@ async function enemyActOne(en){
   if(en.stunned>0){
     en.stunned--; log(`${esc(en.name)}被控制效果限制，無法行動`,"sys"); return;
   }
-  const hitTier = poeRoll(en.def.hitP);
+  // 《戰鬥系統運算 1.0》敵人公式：B/20 × {[M(1−e^(−K·S))·R] − Def} × DC × T，S 為固定值；命中與否由防守方 DC 判定體現
   const pool=[battle.hero,...battle.mates.filter(m=>m.hp>0)];
   if(!pool.filter(u=>u.hp>0).length) return;
   const t=pool[rnd(0,pool.length-1)];
   const tName = t.id==="hero"?"你":esc(t.name);
-  if(hitTier==="fail"||hitTier==="fumble"){
-    log(`${esc(en.name)}撲向 ${tName} —— 攻擊落空`);
-    return;
-  }
-  let atk=rnd(en.def.atkMin,en.def.atkMax);
-  if(en.atkDown) atk=Math.max(1, atk-en.atkDown.val);
-  if(hitTier==="crit") atk=Math.round(atk*CFG.critMul);
-  const counter = isCounter(en.idn, t.idn);
-  if(counter) atk=Math.round(atk*CFG.counterMul);
+  let B=en.def.art||10;
+  if(en.atkDown) B=Math.max(1, B-en.atkDown.val);
+  const R = counterR(en.idn, t.idn);
   const agiP = t.id==="hero"?heroStat("輕捷"):(t.stats?.輕捷||8);
-  const ev = evadeResolve(atk, agiP);
-  if(ev.dmg<=0){ log(`${esc(en.name)}撲向 ${tName} —— 被完全閃開`); return; }
-  const real=dealToUnit(t,ev.dmg);
+  const tDef = t.id==="hero"?battle.hero.def:0;    // 防守方護甲代入公式 Def
+  const ev = dcResolve(agiP);
+  const dmg = coreDamage(B, en.def.sFix ?? CFG.npcS, R, tDef, ev.dc, en.def.T ?? 1);
+  if(dmg<=0){ log(`${esc(en.name)}撲向 ${tName} —— 被完全閃開`); return; }
+  const real=dealToUnit(t,dmg);
   const evNote = ev.tier==="ok"?"（閃過半數）": ev.tier==="fumble"?"（閃避大失敗！）":"";
-  log(`${esc(en.name)}利爪撕裂${tName}${evNote} —— 造成 <span class="dmg">${real}</span> 傷害${counter?COUNTER_TAG:""}`);
+  log(`${esc(en.name)}利爪撕裂${tName}${evNote} —— 造成 <span class="dmg">${real}</span> 傷害${R>1?COUNTER_TAG:""}`);
 }
 async function enemiesAct(){
   for(const en of enemies){
@@ -1577,7 +1741,7 @@ function toggleAuto(btn){
   autoMode=!autoMode;
   btn.classList.toggle("on",autoMode);
   $("#auto-flag").classList.toggle("on",autoMode);
-  log(autoMode?`自動戰鬥開啟 —— 自動以武藝行動，QTE 進行隨機模擬檢定`:`自動戰鬥解除`,"sys");
+  log(autoMode?`自動戰鬥開啟 —— 自動以武藝行動，每個 QTE 依命中機率隨機抽樣`:`自動戰鬥解除`,"sys");
   if(autoMode&&!busy) autoTurn();
 }
 
@@ -1627,19 +1791,51 @@ $("#sheet-overlay").addEventListener("click",e=>{ if(e.target.id==="sheet-overla
 /* ================= 企劃調參台 ================= */
 /* ---- 通用參數（schema 型） ---- */
 const GENERAL_SCHEMA = [
-  {title:"玩家屬性（影響檢定 P 值與上限）", rows:[
-    ["武藝（攻擊檢定）","stat.武藝"],["靈術（靈術檢定）","stat.靈術"],["意志（SAN 上限）","stat.意志"],
-    ["體魄（HP 上限 ×5）","stat.體魄"],["輕捷（閃避／逃跑／先手）","stat.輕捷"]]},
-  {title:"玩家武藝傷害", rows:[["基礎傷害下限","playerAtkMin"],["基礎傷害上限","playerAtkMax"]]},
-  {title:"倍率（流程圖【暫定此數值】處）", rows:[
-    ["QTE 完美倍率","qtePerfect"],["QTE 命中倍率","qteHit"],["叠杯大成功倍率","critMul"],
-    ["克制倍率","counterMul"],["閃避大失敗承傷倍率","evadeFumbleMul"],["玩家立杯反噬傷害（0=無）","fumbleSelfDmg"]]},
-  {title:"隊友傷害與 QTE", rows:[
-    ["基礎傷害下限","mateAtkMin"],["基礎傷害上限","mateAtkMax"],
-    ["QTE 折算比例（流程圖0.5／舊規0.7）","mateQteRatio"]]},
-  {title:"自動戰鬥／批次模擬 QTE 機率", rows:[
-    ["完美機率（0–1）","simQtePerfect"],["命中機率（0–1）","simQteHit"]]},
+  {title:"玩家屬性", rows:[
+    ["武藝（傷害公式 B）","stat.武藝"],["靈術（靈術檢定）","stat.靈術"],["意志（SAN 上限）","stat.意志"],
+    ["體魄（HP 上限 ×5）","stat.體魄"],["輕捷（閃避 DC／逃跑／先手）","stat.輕捷"]]},
+  {title:"傷害公式常數（《戰鬥系統運算 1.0》）", rows:[
+    ["M 最大傷害（上限係數）","M"],["K 增長速率（越大 QTE 影響越小）","K"],
+    ["S 基底（QTE 全失手時的 S）","sBase"],["S 縮放係數","sScale"],["S 指數","sPow"]]},
+  {title:"玩家公式係數（文件未附定義，暫置 1）", rows:[
+    ["F 係數","pF"],["N 係數","pNf"]]},
+  {title:"倍率與係數", rows:[
+    ["R 克制倍率","counterMul"],["R 被克制倍率","counteredMul"],
+    ["DC 閃避成功係數","dcOk"],["DC 閃避大失敗係數","dcFumble"],
+    ["叠杯大成功倍率（靈術等問杯檢定）","critMul"]]},
+  {title:"隊友／敵人固定 S 與 QTE 節拍", rows:[
+    ["固定 S 預設值（各角色可個別覆寫）","npcS"],
+    ["QTE 節拍 BPM（間隔＝60/BPM×隨機{1,½,¼}拍）","qteBpm"]]},
+  {title:"自動戰鬥／批次模擬", rows:[
+    ["單個 QTE 命中機率（0–1）","simQteHitRate"]]},
 ];
+/* ---- QTE 等級表編輯 ---- */
+function renderQteTable(){
+  const host=$("#qte-tune"); if(!host) return;
+  host.innerHTML = [1,2,3,4,5].map(lv=>{
+    const c=QTE_TABLE[lv];
+    return `<div class="tune-card"><h3>等級 ${lv} · ${LV_NAMES[lv]}</h3>
+      <div class="tune-row"><span>單次輸入窗口（秒）</span>
+        <input type="number" step="any" data-qte="${lv}" data-qf="win" value="${c.win}"></div>
+      <div class="tune-row"><span>總數權重（數量:權重, 逗號分隔）</span>
+        <input type="text" data-qte="${lv}" data-qf="weights" value="${esc(c.weights)}" style="width:130px;text-align:right"></div>
+      <div class="tune-row"><span>連打機率（0–1，僅 4／5 級生效）</span>
+        <input type="number" step="any" data-qte="${lv}" data-qf="mashP" value="${c.mashP}"></div>
+      <div class="tune-row"><span>連打時限（秒）</span>
+        <input type="number" step="any" data-qte="${lv}" data-qf="mashT" value="${c.mashT}"></div>
+      <div class="tune-row"><span>連打目標次數</span>
+        <input type="number" step="any" data-qte="${lv}" data-qf="mashN" value="${c.mashN}"></div>
+      <div class="ent-derived">生成連打時：普通數＝總數−2，連打固定為最後一個，最終 N＝普通數＋1</div>
+    </div>`;
+  }).join("");
+}
+function harvestQteTable(){
+  $$("[data-qte]").forEach(el=>{
+    const lv=+el.dataset.qte, f=el.dataset.qf;
+    if(f==="weights"){ if(parseWeights(el.value).length) QTE_TABLE[lv].weights=el.value; return; }
+    const v=parseFloat(el.value); if(!isNaN(v)) QTE_TABLE[lv][f]=v;
+  });
+}
 function cfgGet(path){
   const p=path.split(".");
   if(p[0]==="stat") return hero.stats[p[1]];
@@ -1660,6 +1856,7 @@ function renderGeneral(){
           <input type="number" step="any" data-path="${path}" value="${cfgGet(path)}">
         </div>`).join("")}
     </div>`).join("");
+  renderQteTable();
 }
 
 /* ---- 實體編輯器 ---- */
@@ -1681,7 +1878,9 @@ function renderMatesEditor(){
         <input type="text" data-ent="mate" data-id="${m.id}" data-field="name" value="${esc(m.name)}"></div>
       <div class="tune-row"><span>身份</span>${idnSelect("mate",m.id,m.idn)}</div>
       ${MATE_STAT_KEYS.map(k=>numRow(k,"mate",m.id,k,m.stats[k])).join("")}
-      <div class="ent-derived">HP 上限 = 體魄 × 5 → <b style="color:var(--paper)">${m.hpMax}</b>　SAN 上限 = 意志 → <b style="color:var(--paper)">${m.sanMax}</b><br>檢定屬性取武藝／靈術較高者</div>
+      ${numRow("固定 S（運算文件：可依角色調整）","mate",m.id,"sFix",m.sFix??CFG_DEFAULT.npcS)}
+      ${numRow("T 暗調參數","mate",m.id,"T",m.T??1)}
+      <div class="ent-derived">HP 上限 = 體魄 × 5 → <b style="color:var(--paper)">${m.hpMax}</b>　SAN 上限 = 意志 → <b style="color:var(--paper)">${m.sanMax}</b><br>傷害 B 取武藝／靈術較高者，代入隊友公式（×T，S 固定）</div>
     </div>`).join("");
 }
 function renderMonstersEditor(){
@@ -1693,10 +1892,12 @@ function renderMonstersEditor(){
         <input type="text" data-ent="monster" data-id="${md.id}" data-field="name" value="${esc(md.name)}"></div>
       <div class="tune-row"><span>身份</span>${idnSelect("monster",md.id,md.idn)}</div>
       ${numRow("單體 HP","monster",md.id,"hp",md.hp)}
-      ${numRow("攻擊下限","monster",md.id,"atkMin",md.atkMin)}
-      ${numRow("攻擊上限","monster",md.id,"atkMax",md.atkMax)}
-      ${numRow("攻擊命中 P（1–18）","monster",md.id,"hitP",md.hitP)}
-      ${numRow("輕捷 P（閃避／先手）","monster",md.id,"agiP",md.agiP)}
+      ${numRow("武藝 B（傷害公式基礎）","monster",md.id,"art",md.art)}
+      ${numRow("護甲 Def","monster",md.id,"defV",md.defV)}
+      ${numRow("輕捷 P（閃避 DC／先手）","monster",md.id,"agiP",md.agiP)}
+      ${numRow("敵人等級（1–5，決定 QTE 難度）","monster",md.id,"lv",md.lv)}
+      ${numRow("固定 S","monster",md.id,"sFix",md.sFix??CFG_DEFAULT.npcS)}
+      ${numRow("T 暗調參數","monster",md.id,"T",md.T??1)}
     </div>`).join("");
 }
 function renderItemsEditor(){
@@ -1820,7 +2021,7 @@ $("#add-mate").addEventListener("click",()=>{
   toast("已新增角色（預設待命，可至戰前準備切換出戰）");
 });
 $("#add-monster").addEventListener("click",()=>{
-  monsters.push({id:uid("mon"), name:"新怪物", idn:"鬼", hp:100, atkMin:8, atkMax:14, hitP:10, agiP:8});
+  monsters.push({id:uid("mon"), name:"新怪物", idn:"鬼", hp:100, art:10, defV:0, agiP:8, lv:2, T:1, sFix:CFG_DEFAULT.npcS});
   renderMonstersEditor(); renderEncounter();
   toast("已新增怪物（記得加入出戰序列）");
 });
@@ -1929,7 +2130,9 @@ function applyInputs(){
     const v=parseFloat(inp.value);
     if(!isNaN(v)) cfgSet(inp.dataset.path, v);
   });
+  harvestQteTable();
   harvestEntities();
+  monsters.forEach(m=>{ m.lv=Math.max(1,Math.min(5,Math.round(m.lv||2))); });
   // 衍生值重算
   syncHeroVitals();
   mates.forEach(m=>{
@@ -1952,10 +2155,11 @@ $("#btn-apply").addEventListener("click",()=>{
 });
 $("#btn-reset-cfg").addEventListener("click",()=>{
   CFG = JSON.parse(JSON.stringify(CFG_DEFAULT));
+  QTE_TABLE = JSON.parse(JSON.stringify(QTE_TABLE_DEFAULT));
   hero.stats = {...STAT_DEFAULT};
   const inMap=Object.fromEntries(mates.map(m=>[m.id,m.in]));
   mates = MATES_DEFAULT.map(m=>hydrateMate({...m, in: inMap[m.id] ?? m.in}));
-  monsters = MONSTERS_DEFAULT.map(m=>({...m}));
+  monsters = MONSTERS_DEFAULT.map(hydrateMonster);
   const carryMap=Object.fromEntries(items.map(i=>[i.id,i.carry]));
   items = ITEMS_DEFAULT.map(i=>({...i, carry: carryMap[i.id] ?? i.carry}));
   spells = SPELLS_DEFAULT.map(s=>({...s}));
@@ -1978,12 +2182,13 @@ function collectConfig(){
   return {
     _meta:{
       tool:"battle-ui-prototype",
-      version:6,
-      schemaVersion:"battle-ui-config/v6",
+      version:7,
+      schemaVersion:"battle-ui-config/v7",
       exportedAt:new Date().toISOString(),
-      includes:["cfg","hero","mates","monsters","items","spells","outfits","activeOutfit","encounter","levels"]
+      includes:["cfg","qteTable","hero","mates","monsters","items","spells","outfits","activeOutfit","encounter","levels"]
     },
     cfg:CFG,
+    qteTable:QTE_TABLE,
     hero:{id:hero.id, name:hero.name, idn:hero.idn, role:hero.role, stats:hero.stats},
     heroStats:hero.stats,
     mates:mates.map(m=>({id:m.id, name:m.name, idn:m.idn, role:m.role||"自訂角色", in:m.in, stats:m.stats, detail:m.detail||""})),
@@ -2018,6 +2223,10 @@ $("#import-file").addEventListener("change",e=>{
       if(!data.cfg) throw new Error("缺少 cfg 欄位");
       CFG = Object.assign(JSON.parse(JSON.stringify(CFG_DEFAULT)), data.cfg);
       delete CFG.enemy; // 舊版欄位不再使用
+      if(data.qteTable){
+        QTE_TABLE = JSON.parse(JSON.stringify(QTE_TABLE_DEFAULT));
+        for(const lv of [1,2,3,4,5]) if(data.qteTable[lv]) Object.assign(QTE_TABLE[lv], data.qteTable[lv]);
+      }
       if(data.hero){
         hero.name = data.hero.name || hero.name;
         hero.idn = IDN_LIST.includes(data.hero.idn) ? data.hero.idn : hero.idn;
@@ -2035,17 +2244,17 @@ $("#import-file").addEventListener("change",e=>{
       let legacyCounts=null;
       if(Array.isArray(data.monsters)){
         legacyCounts = data.monsters.some(m=>m.count!=null) ? data.monsters.map(m=>({id:m.id, count:m.count??0})) : null;
-        monsters = data.monsters.map(m=>({
+        monsters = data.monsters.map(m=>hydrateMonster({
+          ...m,
           id:m.id||uid("mon"), name:m.name||"怪物", idn:IDN_LIST.includes(m.idn)?m.idn:"鬼",
-          hp:m.hp??100, atkMin:m.atkMin??8, atkMax:m.atkMax??14,
-          hitP:m.hitP??10, agiP:m.agiP??8
+          hp:m.hp??100, agiP:m.agiP??8
         }));
-        if(!monsters.length) monsters = MONSTERS_DEFAULT.map(m=>({...m}));
+        if(!monsters.length) monsters = MONSTERS_DEFAULT.map(hydrateMonster);
       } else if(data.cfg && data.cfg.enemy){
         // v2 相容：單一敵方參數 → 轉為預設敵人定義
         const e=data.cfg.enemy;
-        monsters=[{id:"mon1", name:"敵人A", idn:"鬼", hp:e.hp??120,
-          atkMin:e.atkMin??10, atkMax:e.atkMax??18, hitP:e.hitP??12, agiP:e.agiP??8}];
+        monsters=[hydrateMonster({id:"mon1", name:"敵人A", idn:"鬼", hp:e.hp??120,
+          atkMin:e.atkMin??10, atkMax:e.atkMax??18, agiP:e.agiP??8})];
         legacyCounts=[{id:"mon1", count:e.count??1}];
       }
       // 關卡編成：v5 直接讀；舊版由 count 重建序列
@@ -2112,10 +2321,10 @@ $("#import-file").addEventListener("change",e=>{
   reader.readAsText(f);
 });
 
-/* ---- 批次模擬（不跑演出，純結算） ---- */
+/* ---- 批次模擬（不跑演出，純結算，公式對齊《戰鬥系統運算 1.0》） ---- */
 function simulateOne(){
-  const H={hp:hero.stats.體魄*5, def:hero.outfit.def, art:heroStat("武藝"), agi:heroStat("輕捷"), idn:hero.idn, paralyzed:0};
-  const M=mates.filter(m=>m.in).map(m=>({hp:m.hpMax, agi:m.stats.輕捷, P:Math.max(m.stats.武藝,m.stats.靈術), idn:m.idn}));
+  const H={hp:hero.stats.體魄*5, def:hero.outfit.def, B:heroStat("武藝"), agi:heroStat("輕捷"), idn:hero.idn, paralyzed:0};
+  const M=mates.filter(m=>m.in).map(m=>({hp:m.hpMax, agi:m.stats.輕捷, B:Math.max(m.stats.武藝,m.stats.靈術), idn:m.idn, sFix:m.sFix??CFG.npcS, T:m.T??1}));
   const spawns=buildSpawns().slice(0,6);
   if(!spawns.length) return {result:"invalid"};
   const E=spawns.map(s=>({hp:s.def.hp, def:s.def, idn:s.def.idn}));
@@ -2130,7 +2339,7 @@ function simulateOne(){
       if(ev.type==="paralyze"){ H.paralyzed+=Math.max(1,Math.round(ev.val||1)); }
       else if(ev.type==="aoe"){
         const v=Math.max(0,Math.round(ev.val||0));
-        const dh=Math.max(0,v-H.def); H.hp-=dh; dmgTaken+=dh;
+        H.hp-=v; dmgTaken+=v;
         M.forEach(m=>{ if(m.hp>0) m.hp-=v; });
         if(H.hp<=0) return true;
       }
@@ -2149,16 +2358,13 @@ function simulateOne(){
   function enemyTurn(){
     for(const en of E){
       if(en.hp<=0) continue;
-      const hitTier=poeRoll(en.def.hitP);
-      if(hitTier==="fail"||hitTier==="fumble") continue;
       const pool=[{u:H,hero:true},...M.filter(m=>m.hp>0).map(m=>({u:m}))];
       const pick=pool[rnd(0,pool.length-1)];
-      let atk=rnd(en.def.atkMin,en.def.atkMax);
-      if(hitTier==="crit") atk=Math.round(atk*CFG.critMul);
-      if(isCounter(en.idn, pick.u.idn)) atk=Math.round(atk*CFG.counterMul);
-      const ev=evadeResolve(atk, pick.hero?H.agi:pick.u.agi);
-      let d=ev.dmg;
-      if(pick.hero){ d=Math.max(0,d-H.def); dmgTaken+=d; }
+      const R=counterR(en.idn, pick.u.idn);
+      const ev=dcResolve(pick.hero?H.agi:pick.u.agi);
+      const d=coreDamage(en.def.art||10, en.def.sFix??CFG.npcS, R, pick.hero?H.def:0, ev.dc, en.def.T??1);
+      if(d<=0) continue;
+      if(pick.hero) dmgTaken+=d;
       pick.u.hp-=d;
       if(H.hp<=0) return;
     }
@@ -2168,33 +2374,22 @@ function simulateOne(){
     if(H.paralyzed>0){ H.paralyzed--; }
     else {
       const target=ae[0];
-      const tier=poeRoll(H.art);
-      if(tier==="ok"||tier==="crit"){
-        const q=simQTE();
-        let atk=rnd(CFG.playerAtkMin,CFG.playerAtkMax);
-        atk=Math.round(atk*qteMul(q));
-        if(tier==="crit") atk=Math.round(atk*CFG.critMul);
-        if(isCounter(H.idn, target.idn)) atk=Math.round(atk*CFG.counterMul);
-        const ev=evadeResolve(atk, target.def.agiP);
-        target.hp-=ev.dmg; dmgDealt+=ev.dmg;
-      } else if(tier==="fumble" && CFG.fumbleSelfDmg>0){
-        H.hp-=CFG.fumbleSelfDmg;
-      }
+      const q=simQTE(target.def.lv||2);
+      const S=calcS(q.n,q.N);
+      const R=counterR(H.idn, target.idn);
+      const ev=dcResolve(target.def.agiP);
+      const d=coreDamage(H.B, S, R, target.def.defV||0, ev.dc, CFG.pF*CFG.pNf);
+      if(d>0){ target.hp-=d; dmgDealt+=d; }
     }
     if(!aliveE().length) return;
-    const mateMul=1+(CFG.qtePerfect-1)*CFG.mateQteRatio;
     for(const m of M){
       if(m.hp<=0) continue;
       const ae2=aliveE(); if(!ae2.length) return;
-      const t=poeRoll(m.P);
-      if(t==="fail"||t==="fumble") continue;
-      let atk=rnd(CFG.mateAtkMin,CFG.mateAtkMax);
-      atk=Math.round(atk*mateMul);
-      if(t==="crit") atk=Math.round(atk*CFG.critMul);
       const target2=ae2[rnd(0,ae2.length-1)];
-      if(isCounter(m.idn, target2.idn)) atk=Math.round(atk*CFG.counterMul);
-      const ev=evadeResolve(atk, target2.def.agiP);
-      target2.hp-=ev.dmg; dmgDealt+=ev.dmg;
+      const R=counterR(m.idn, target2.idn);
+      const ev=dcResolve(target2.def.agiP);
+      const d=coreDamage(m.B, m.sFix, R, target2.def.defV||0, ev.dc, m.T);
+      if(d>0){ target2.hp-=d; dmgDealt+=d; }
     }
   }
   if(!weFirst){ enemyTurn(); if(H.hp<=0) return {result:"lose",round:0,heroHp:0,dmgDealt,dmgTaken}; }
