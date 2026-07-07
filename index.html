@@ -583,7 +583,7 @@ h1.title{font-family:var(--serif);font-weight:900;font-size:26px;letter-spacing:
     <div class="subtitle">給團隊看的重點摘要，對照《戰鬥系統》文件逐項落地。</div>
 
     <h2>整體節奏設計（對齊《戰鬥系統運算 1.0》）</h2>
-    <p>玩家一回合的體感節奏為：<b>選指令 → 選目標 → QTE 按鍵序列（全螢幕）→ 結算</b>。本版依運算文件調整：<b>是否進攻成功不再由武藝問杯判定</b>（測試中發現前期成功率過低、連續進攻失敗造成負反饋），改由 QTE 成功個數與總數計算 S 值——即使全部失手仍有 S=0.15 的保底輸出，武藝只影響最終傷害的基礎值 B。擲筊問杯保留於靈術檢定與逃跑檢定，仍是招牌儀式演出；防守方的閃避四級判定（大成功／成功／失敗／大失敗）也沿用同一套骰法，對應公式中的 DC 係數。</p>
+    <p>玩家一回合的體感節奏為：<b>選指令 → 選目標 → QTE 按鍵序列（全螢幕）→ 結算</b>。本版依運算文件調整：<b>是否進攻成功不再由武藝問杯判定</b>（測試中發現前期成功率過低、連續進攻失敗造成負反饋），改由 QTE 成功個數與總數計算 S 值——即使全部失手仍有 S=0.15 的保底輸出，武藝只影響最終傷害的基礎值 B。<b>擲筊問杯移至防守側</b>：敵方攻擊主角時，全螢幕演出「閃避・輕捷檢定」，叠杯／聖杯／哭杯／立杯四級結果直接對應公式中的 DC 係數（0／0.5／1／1.5）——儀式感保留，且僅限主角（隊友被攻擊只出一行日誌，自動戰鬥模式跳過演出）。問杯同時保留於靈術檢定與逃跑檢定。</p>
 
     <h2>判定與傷害公式（《戰鬥系統運算 1.0》）</h2>
     <ul>
@@ -597,7 +597,7 @@ h1.title{font-family:var(--serif);font-weight:900;font-size:26px;letter-spacing:
 
     <h2>資訊揭露層級（規格 3 節）</h2>
     <ul>
-      <li><b>玩家</b>：完整顯示 QTE 成功數（n／N）與傷害結算；靈術／逃跑仍完整演出問杯結果等級。<span class="spec">→「僅顯示玩家自己的問杯結果」</span></li>
+      <li><b>玩家</b>：完整顯示 QTE 成功數（n／N）與傷害結算；被敵方攻擊時演出閃避問杯，靈術／逃跑亦完整演出問杯結果等級。<span class="spec">→「僅顯示玩家自己的問杯結果」</span></li>
       <li><b>隊友／敵方</b>：日誌只出現一行結算（例：隊友A的攻擊 → 造成 14 傷害），不演出問杯。<span class="spec">→「隊友/敵方直接體現傷害結算」，維持節奏</span></li>
       <li><b>敵方屬性</b>：不顯示 HP 數值，改用五格傷勢燈 + 傷勢文字（無傷／輕傷／重傷／瀕死）；名牌僅額外標示等級（Lv1–5，玩家可藉此預期 QTE 難度）。<span class="spec">→「不可查看敵方屬性」</span></li>
       <li><b>身份克制</b>：敵我名牌旁常駐天／地／人／鬼圓章。進入戰鬥即揭曉並記錄（開戰 toast 提示「敵人A身份已記錄」），呼應社交頁解鎖條件 2。</li>
@@ -1640,8 +1640,18 @@ async function enemyActOne(en){
   const agiP = t.id==="hero"?heroStat("輕捷"):(t.stats?.輕捷||8);
   const tDef = t.id==="hero"?battle.hero.def:0;    // 防守方護甲代入公式 Def
   const ev = dcResolve(agiP);
+  // 問杯儀式移至防守側：僅主角被攻擊時演出（自動戰鬥跳過演出，判定照常）
+  if(t.id==="hero" && !autoMode){
+    log(`${esc(en.name)}撲向你 —— 閃避檢定`,"me");
+    await poeShow("閃避 · 輕捷檢定", ev.tier);
+    log(`你的閃避 —— ${TIER_HTML[ev.tier]}`,"me");
+  }
   const dmg = coreDamage(B, en.def.sFix ?? CFG.npcS, R, tDef, ev.dc, en.def.T ?? 1);
-  if(dmg<=0){ log(`${esc(en.name)}撲向 ${tName} —— 被完全閃開`); return; }
+  if(dmg<=0){
+    if(t.id==="hero") log(`身形一側 —— 你完全閃開了${esc(en.name)}的攻擊`,"me");
+    else log(`${esc(en.name)}撲向 ${tName} —— 被完全閃開`);
+    return;
+  }
   const real=dealToUnit(t,dmg);
   const evNote = ev.tier==="ok"?"（閃過半數）": ev.tier==="fumble"?"（閃避大失敗！）":"";
   log(`${esc(en.name)}利爪撕裂${tName}${evNote} —— 造成 <span class="dmg">${real}</span> 傷害${R>1?COUNTER_TAG:""}`);
