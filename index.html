@@ -726,9 +726,9 @@ h1.title{font-family:var(--serif);font-weight:900;font-size:26px;letter-spacing:
       </div>
 
       <div class="tune-group" id="group-db">
-        <div class="tune-group-head">資料庫<small>可先把所有設計一次全部寫入，再各自切換「本關登場」；移出本關不會刪除資料</small></div>
+        <div class="tune-group-head">資料庫<small>可先把所有設計一次全部寫入，再按「加入本關」挑選上場者；移出本關不會刪除資料</small></div>
         <div class="tune-sec" id="sec-mates">
-          <div class="ent-head"><h2>角色（隊友）——設為「登場」才會出現在戰前準備的隊伍清單</h2><button class="btn ghost sm" id="add-mate">＋ 新增角色</button></div>
+          <div class="ent-head"><h2>角色（隊友）——按「加入本關」才會出現在戰前準備的隊伍清單</h2><button class="btn ghost sm" id="add-mate">＋ 新增角色</button></div>
           <div class="tune-grid" id="ent-mates"></div>
         </div>
         <div class="tune-sec" id="sec-monsters">
@@ -736,7 +736,7 @@ h1.title{font-family:var(--serif);font-weight:900;font-size:26px;letter-spacing:
           <div class="tune-grid" id="ent-monsters"></div>
         </div>
         <div class="tune-sec" id="sec-spells">
-          <div class="ent-head"><h2>靈術——設為「登場」才會出現在戰鬥指令選單（施放時檢定並扣 SAN）</h2><button class="btn ghost sm" id="add-spell">＋ 新增靈術</button></div>
+          <div class="ent-head"><h2>靈術——按「加入本關」才會出現在戰鬥指令選單（施放時檢定並扣 SAN）</h2><button class="btn ghost sm" id="add-spell">＋ 新增靈術</button></div>
           <div class="tune-grid" id="ent-spells"></div>
         </div>
         <div class="tune-sec" id="sec-outfits">
@@ -744,7 +744,7 @@ h1.title{font-family:var(--serif);font-weight:900;font-size:26px;letter-spacing:
           <div class="tune-grid" id="ent-outfits"></div>
         </div>
         <div class="tune-sec" id="sec-items">
-          <div class="ent-head"><h2>道具——設為「登場」才會出現在戰前準備的道具欄</h2><button class="btn ghost sm" id="add-item">＋ 新增道具</button></div>
+          <div class="ent-head"><h2>道具——按「加入本關」才會出現在戰前準備的道具欄</h2><button class="btn ghost sm" id="add-item">＋ 新增道具</button></div>
           <div class="tune-grid" id="ent-items"></div>
         </div>
       </div>
@@ -1062,7 +1062,7 @@ function renderMates(){
       <button class="state" data-view="${m.id}">檢視</button>
       <div class="state">${m.in?"出戰中":"待命"}</div>
     </div>`).join("") ||
-    '<div class="roster-empty">本關無登場角色 —— 至「數值測試 → 角色」把角色設為登場</div>';
+    '<div class="roster-empty">本關尚無角色 —— 至「數值測試 → 角色」按「加入本關」</div>';
   $("#squad-n").textContent = mates.filter(m=>m.in).length;
   updateSum();
 }
@@ -1084,7 +1084,7 @@ function renderItems(){
       <span class="inm">${esc(it.name)}</span><span class="icnt">× ${it.cnt}</span>
       <div class="idesc">${itemDesc(it)}</div>
     </div>`).join("") ||
-    '<div class="roster-empty">本關無可得道具 —— 至「數值測試 → 道具」把道具設為登場</div>';
+    '<div class="roster-empty">本關尚無道具 —— 至「數值測試 → 道具」按「加入本關」</div>';
   $("#carry-n").textContent = items.filter(i=>i.carry).length;
   updateSum();
 }
@@ -1109,7 +1109,7 @@ function renderSpells(){
         <span>理智 <b>−${s.san}</b></span>
       </div>
     </div>`).join("") ||
-    '<div class="roster-empty">本關無登場靈術 —— 至「數值測試 → 靈術」把靈術設為登場</div>';
+    '<div class="roster-empty">本關尚無靈術 —— 至「數值測試 → 靈術」按「加入本關」</div>';
 }
 function updateSum(){
   $("#prep-sum").textContent =
@@ -1519,7 +1519,7 @@ function closeSubmenu(){ const s=$("#submenu"); s.classList.remove("show"); s.in
 function openSpellMenu(){
   const s=$("#submenu");
   const usable = spells.filter(x=>x.deploy!==false);
-  if(!usable.length){ toast("本關無登場靈術，可至「數值測試 → 靈術」設定"); return; }
+  if(!usable.length){ toast("本關尚無靈術，可至「數值測試 → 靈術」按「加入本關」"); return; }
   s.innerHTML = usable.map(sp=>`
     <button class="sub-item" data-spell="${sp.id}" ${battle.hero.san<sp.san?"disabled":""}>
       <div class="n">${esc(sp.name)}<span style="font-size:10px;color:var(--ash-dim);margin-left:6px">${SPELL_TYPES[sp.type]||""}</span></div>
@@ -1994,7 +1994,7 @@ function renderMatesEditor(){
   $("#ent-mates").innerHTML = mates.map(m=>`
     <div class="tune-card ent-card">
       <button class="ent-del" data-del-mate="${m.id}">刪除</button>
-      <h3>${esc(m.name)}${m.deploy!==false?'<span class="dep-badge">本關登場</span>':'<span class="dep-badge off">未登場</span>'}</h3>
+      <h3>${esc(m.name)}${m.deploy!==false?'<span class="dep-badge">已加入本關</span>':'<span class="dep-badge off">未加入本關</span>'}</h3>
       <div class="tune-row"><span>名稱</span>
         <input type="text" data-ent="mate" data-id="${m.id}" data-field="name" value="${esc(m.name)}"></div>
       <div class="tune-row"><span>身份</span>${idnSelect("mate",m.id,m.idn)}</div>
@@ -2003,7 +2003,7 @@ function renderMatesEditor(){
       ${numRow("命中時 S（代入傷害公式）","mate",m.id,"sHit",m.sHit??CFG_DEFAULT.npcSHit)}
       ${numRow("T 暗調參數","mate",m.id,"T",m.T??1)}
       <div class="ent-derived">HP 上限 = 體魄 × 5 → <b style="color:var(--paper)">${m.hpMax}</b>　SAN 上限 = 意志 → <b style="color:var(--paper)">${m.sanMax}</b><br>傷害 B 取武藝／靈術較高者，代入隊友公式（×T，S 固定）</div>
-      <button class="btn ghost sm dep-btn" data-dep-ent="mate" data-dep-id="${m.id}">${m.deploy!==false?"移出本關（資料保留）":"登場本關"}</button>
+      <button class="btn ghost sm dep-btn" data-dep-ent="mate" data-dep-id="${m.id}">${m.deploy!==false?"移出本關（資料保留）":"＋ 加入本關"}</button>
     </div>`).join("");
 }
 function renderMonstersEditor(){
@@ -2029,7 +2029,7 @@ function renderItemsEditor(){
   $("#ent-items").innerHTML = items.map(it=>`
     <div class="tune-card ent-card">
       <button class="ent-del" data-del-item="${it.id}">刪除</button>
-      <h3>${esc(it.name)}${it.deploy!==false?'<span class="dep-badge">本關登場</span>':'<span class="dep-badge off">未登場</span>'}</h3>
+      <h3>${esc(it.name)}${it.deploy!==false?'<span class="dep-badge">已加入本關</span>':'<span class="dep-badge off">未加入本關</span>'}</h3>
       <div class="tune-row"><span>名稱</span>
         <input type="text" data-ent="item" data-id="${it.id}" data-field="name" value="${esc(it.name)}"></div>
       <div class="tune-row"><span>效果類型</span>
@@ -2039,7 +2039,7 @@ function renderItemsEditor(){
       ${numRow("效果值","item",it.id,"val",it.val)}
       ${numRow("數量","item",it.id,"cnt",it.cnt)}
       <div class="ent-derived">${itemDesc(it)}</div>
-      <button class="btn ghost sm dep-btn" data-dep-ent="item" data-dep-id="${it.id}">${it.deploy!==false?"移出本關（資料保留）":"登場本關"}</button>
+      <button class="btn ghost sm dep-btn" data-dep-ent="item" data-dep-id="${it.id}">${it.deploy!==false?"移出本關（資料保留）":"＋ 加入本關"}</button>
     </div>`).join("");
 }
 const SPELL_FIELD_ROWS = {
@@ -2053,7 +2053,7 @@ function renderSpellsEditor(){
   $("#ent-spells").innerHTML = spells.map(sp=>`
     <div class="tune-card ent-card">
       <button class="ent-del" data-del-spell="${sp.id}">刪除</button>
-      <h3>${esc(sp.name)}${sp.deploy!==false?'<span class="dep-badge">本關登場</span>':'<span class="dep-badge off">未登場</span>'}</h3>
+      <h3>${esc(sp.name)}${sp.deploy!==false?'<span class="dep-badge">已加入本關</span>':'<span class="dep-badge off">未加入本關</span>'}</h3>
       <div class="tune-row"><span>名稱</span>
         <input type="text" data-ent="spell" data-id="${sp.id}" data-field="name" value="${esc(sp.name)}"></div>
       <div class="tune-row"><span>類型</span>
@@ -2067,7 +2067,7 @@ function renderSpellsEditor(){
       ${numRow("SAN 消耗","spell",sp.id,"san",sp.san)}
       ${(SPELL_FIELD_ROWS[sp.type]||[]).map(([label,f])=>numRow(label,"spell",sp.id,f,sp[f])).join("")}
       <div class="ent-derived">${spellDesc(sp)}<br>叠杯大成功時效果 × 大成功倍率</div>
-      <button class="btn ghost sm dep-btn" data-dep-ent="spell" data-dep-id="${sp.id}">${sp.deploy!==false?"移出本關（資料保留）":"登場本關"}</button>
+      <button class="btn ghost sm dep-btn" data-dep-ent="spell" data-dep-id="${sp.id}">${sp.deploy!==false?"移出本關（資料保留）":"＋ 加入本關"}</button>
     </div>`).join("");
 }
 function renderOutfitsEditor(){
@@ -2142,10 +2142,10 @@ function renderEditors(){ renderMatesEditor(); renderMonstersEditor(); renderIte
 
 /* ---- 新增 ---- */
 $("#add-mate").addEventListener("click",()=>{
-  mates.push(hydrateMate({id:uid("m"), name:"新角色", idn:"人", role:"自訂角色", in:false,
+  mates.push(hydrateMate({id:uid("m"), name:"新角色", idn:"人", role:"自訂角色", in:false, deploy:false,
     stats:{體魄:10,武藝:10,輕捷:10,靈術:10,意志:10}, detail:"企劃自訂角色。"}));
   renderMatesEditor(); renderMates();
-  toast("已新增角色（預設待命，可至戰前準備切換出戰）");
+  toast("已新增角色至資料庫（按「加入本關」讓角色登場）");
 });
 $("#add-monster").addEventListener("click",()=>{
   monsters.push({id:uid("mon"), name:"新怪物", idn:"鬼", hp:100, art:10, defV:0, agiP:8, lv:2, T:1, sFix:CFG_DEFAULT.npcS, sHit:CFG_DEFAULT.npcSHit});
@@ -2153,9 +2153,9 @@ $("#add-monster").addEventListener("click",()=>{
   toast("已新增怪物（記得加入出戰序列）");
 });
 $("#add-spell").addEventListener("click",()=>{
-  spells.push({id:uid("s"), name:"新靈術", san:2, chk:"靈術", type:"dmg", vmin:10, vmax:16, stun:0, dur:0, deploy:true});
+  spells.push({id:uid("s"), name:"新靈術", san:2, chk:"靈術", type:"dmg", vmin:10, vmax:16, stun:0, dur:0, deploy:false});
   renderSpellsEditor(); renderSpells();
-  toast("已新增靈術");
+  toast("已新增靈術至資料庫（按「加入本關」使其可用）");
 });
 $("#add-outfit").addEventListener("click",()=>{
   outfits.push({id:uid("o"), name:"新服裝", def:0, buffStat:"", buffVal:0, src:"企劃自訂"});
@@ -2163,9 +2163,9 @@ $("#add-outfit").addEventListener("click",()=>{
   toast("已新增服裝（按「著裝」設為當前裝束）");
 });
 $("#add-item").addEventListener("click",()=>{
-  items.push({id:uid("i"), name:"新道具", effect:"heal", val:10, cnt:1, carry:false, deploy:true});
+  items.push({id:uid("i"), name:"新道具", effect:"heal", val:10, cnt:1, carry:false, deploy:false});
   renderItemsEditor(); renderItems();
-  toast("已新增道具（預設未攜帶，可至戰前準備勾選）");
+  toast("已新增道具至資料庫（按「加入本關」使其可得）");
 });
 
 /* ---- 刪除 ---- */
@@ -2212,7 +2212,7 @@ document.addEventListener("click",e=>{
   if(ent==="mate"){ if(!x.deploy) x.in=false; renderMatesEditor(); renderMates(); }
   if(ent==="spell"){ renderSpellsEditor(); renderSpells(); }
   if(ent==="item"){ if(!x.deploy) x.carry=false; renderItemsEditor(); renderItems(); }
-  toast(x.deploy?`「${x.name}」已登場本關`:`「${x.name}」已移出本關（資料保留）`);
+  toast(x.deploy?`「${x.name}」已加入本關`:`「${x.name}」已移出本關（資料保留）`);
 });
 /* 出戰序列操作 */
 document.addEventListener("click",e=>{
