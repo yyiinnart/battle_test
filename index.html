@@ -404,8 +404,18 @@ h1.title{font-family:var(--serif);font-weight:900;font-size:26px;letter-spacing:
 .ent-head h2{font-family:var(--serif);font-weight:900;font-size:16px;letter-spacing:.12em;color:var(--gold-pale)}
 .btn.sm{padding:6px 16px;font-size:12px;letter-spacing:.15em}
 .ent-card{position:relative}
-.ent-del{position:absolute;top:10px;right:12px;font-size:11px;color:var(--ash-dim);border:1px solid var(--line);padding:2px 10px;border-radius:2px;letter-spacing:.15em;transition:.15s}
+.ent-top{position:absolute;top:10px;right:12px;display:flex;gap:6px;z-index:2}
+.ent-del,.ent-quick{font-size:11px;color:var(--ash-dim);border:1px solid var(--line);padding:2px 10px;border-radius:2px;letter-spacing:.15em;transition:.15s;background:var(--panel)}
 .ent-del:hover{color:#f3b9a8;border-color:var(--cinnabar)}
+.ent-quick:hover{color:var(--gold-pale);border-color:var(--gold)}
+/* 收合模式：預設只顯示標題列，點標題展開編輯 */
+.ent-card>h3{cursor:pointer;user-select:none;padding-right:118px}
+.ent-card>h3::before{content:"▸";display:inline-block;margin-right:8px;font-size:11px;color:var(--ash-dim);transition:.15s;vertical-align:1px}
+.ent-card.open>h3::before,.ent-card.s-open>h3::before{content:"▾";color:var(--gold)}
+.ent-card:not(.open):not(.s-open)>:not(h3):not(.ent-top){display:none}
+.ent-card:not(.open):not(.s-open){padding:11px 14px}
+.ent-card:not(.open):not(.s-open)>h3{margin-bottom:0;padding-bottom:0;border-bottom:none}
+.ent-sum{display:block;font-family:var(--sans);font-weight:400;font-size:11px;letter-spacing:.05em;color:var(--ash-dim);margin-top:4px}
 .ent-derived{font-size:11.5px;color:var(--ash-dim);margin-top:8px;line-height:1.6;border-top:1px dashed var(--line-soft);padding-top:6px}
 .roster-row{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px dashed var(--line-soft);font-size:13px}
 .roster-row .no{width:22px;color:var(--gold);font-family:var(--serif);font-weight:700}
@@ -1981,6 +1991,15 @@ function renderGeneral(){
 }
 
 /* ---- 實體編輯器 ---- */
+/* 收合狀態：記住展開中的實體 id，重繪後不會縮回去 */
+const entOpen = new Set();
+document.addEventListener("click",e=>{
+  const h=e.target.closest(".ent-card>h3"); if(!h) return;
+  if(e.target.closest(".ent-top")) return;
+  const card=h.closest(".ent-card"), id=card.dataset.entId;
+  card.classList.toggle("open");
+  if(id){ card.classList.contains("open") ? entOpen.add(id) : entOpen.delete(id); }
+});
 function idnSelect(ent,id,val){
   return `<select data-ent="${ent}" data-id="${id}" data-field="idn">
     ${IDN_LIST.map(x=>`<option value="${x}" ${x===val?"selected":""}>${x}</option>`).join("")}
@@ -1992,9 +2011,12 @@ function numRow(label,ent,id,field,val){
 }
 function renderMatesEditor(){
   $("#ent-mates").innerHTML = mates.map(m=>`
-    <div class="tune-card ent-card">
-      <button class="ent-del" data-del-mate="${m.id}">刪除</button>
-      <h3>${esc(m.name)}${m.deploy!==false?'<span class="dep-badge">已加入本關</span>':'<span class="dep-badge off">未加入本關</span>'}</h3>
+    <div class="tune-card ent-card ${entOpen.has(m.id)?"open":""}" data-ent-id="${m.id}">
+      <div class="ent-top">
+        <button class="ent-quick" data-dep-ent="mate" data-dep-id="${m.id}">${m.deploy!==false?"移出":"＋ 加入"}</button>
+        <button class="ent-del" data-del-mate="${m.id}">刪除</button>
+      </div>
+      <h3>${esc(m.name)}${m.deploy!==false?'<span class="dep-badge">已加入本關</span>':'<span class="dep-badge off">未加入本關</span>'}<span class="ent-sum">${m.idn} · HP ${m.hpMax} · 武藝 ${m.stats.武藝} · 靈術 ${m.stats.靈術} · 輕捷 ${m.stats.輕捷}</span></h3>
       <div class="tune-row"><span>名稱</span>
         <input type="text" data-ent="mate" data-id="${m.id}" data-field="name" value="${esc(m.name)}"></div>
       <div class="tune-row"><span>身份</span>${idnSelect("mate",m.id,m.idn)}</div>
@@ -2003,14 +2025,16 @@ function renderMatesEditor(){
       ${numRow("命中時 S（代入傷害公式）","mate",m.id,"sHit",m.sHit??CFG_DEFAULT.npcSHit)}
       ${numRow("T 暗調參數","mate",m.id,"T",m.T??1)}
       <div class="ent-derived">HP 上限 = 體魄 × 5 → <b style="color:var(--paper)">${m.hpMax}</b>　SAN 上限 = 意志 → <b style="color:var(--paper)">${m.sanMax}</b><br>傷害 B 取武藝／靈術較高者，代入隊友公式（×T，S 固定）</div>
-      <button class="btn ghost sm dep-btn" data-dep-ent="mate" data-dep-id="${m.id}">${m.deploy!==false?"移出本關（資料保留）":"＋ 加入本關"}</button>
     </div>`).join("");
 }
 function renderMonstersEditor(){
   $("#ent-monsters").innerHTML = monsters.map(md=>`
-    <div class="tune-card ent-card">
-      <button class="ent-del" data-del-monster="${md.id}">刪除</button>
-      <h3>${esc(md.name)}${(n=>n>0?`<span class="dep-badge">已編入本關 ×${n}</span>`:'<span class="dep-badge off">未編入本關</span>')(ENC.roster.filter(id=>id===md.id).length)}</h3>
+    <div class="tune-card ent-card ${entOpen.has(md.id)?"open":""}" data-ent-id="${md.id}">
+      <div class="ent-top">
+        <button class="ent-quick" data-ros-add="${md.id}">＋ 編入</button>
+        <button class="ent-del" data-del-monster="${md.id}">刪除</button>
+      </div>
+      <h3>${esc(md.name)}${(n=>n>0?`<span class="dep-badge">已編入本關 ×${n}</span>`:'<span class="dep-badge off">未編入本關</span>')(ENC.roster.filter(id=>id===md.id).length)}<span class="ent-sum">${md.idn} · HP ${md.hp} · 武藝 ${md.art} · 護甲 ${md.defV} · Lv${md.lv}</span></h3>
       <div class="tune-row"><span>名稱</span>
         <input type="text" data-ent="monster" data-id="${md.id}" data-field="name" value="${esc(md.name)}"></div>
       <div class="tune-row"><span>身份</span>${idnSelect("monster",md.id,md.idn)}</div>
@@ -2022,14 +2046,16 @@ function renderMonstersEditor(){
       ${numRow("攻擊成功率（0–1，未過則整次落空）","monster",md.id,"sFix",md.sFix??CFG_DEFAULT.npcS)}
       ${numRow("命中時 S（代入傷害公式）","monster",md.id,"sHit",md.sHit??CFG_DEFAULT.npcSHit)}
       ${numRow("T 暗調參數","monster",md.id,"T",md.T??1)}
-      <button class="btn ghost sm dep-btn" data-ros-add="${md.id}">＋ 編入出戰序列</button>
     </div>`).join("");
 }
 function renderItemsEditor(){
   $("#ent-items").innerHTML = items.map(it=>`
-    <div class="tune-card ent-card">
-      <button class="ent-del" data-del-item="${it.id}">刪除</button>
-      <h3>${esc(it.name)}${it.deploy!==false?'<span class="dep-badge">已加入本關</span>':'<span class="dep-badge off">未加入本關</span>'}</h3>
+    <div class="tune-card ent-card ${entOpen.has(it.id)?"open":""}" data-ent-id="${it.id}">
+      <div class="ent-top">
+        <button class="ent-quick" data-dep-ent="item" data-dep-id="${it.id}">${it.deploy!==false?"移出":"＋ 加入"}</button>
+        <button class="ent-del" data-del-item="${it.id}">刪除</button>
+      </div>
+      <h3>${esc(it.name)}${it.deploy!==false?'<span class="dep-badge">已加入本關</span>':'<span class="dep-badge off">未加入本關</span>'}<span class="ent-sum">${EFFECT_NAMES[it.effect]||""} ${it.val} · 數量 ×${it.cnt}</span></h3>
       <div class="tune-row"><span>名稱</span>
         <input type="text" data-ent="item" data-id="${it.id}" data-field="name" value="${esc(it.name)}"></div>
       <div class="tune-row"><span>效果類型</span>
@@ -2039,7 +2065,6 @@ function renderItemsEditor(){
       ${numRow("效果值","item",it.id,"val",it.val)}
       ${numRow("數量","item",it.id,"cnt",it.cnt)}
       <div class="ent-derived">${itemDesc(it)}</div>
-      <button class="btn ghost sm dep-btn" data-dep-ent="item" data-dep-id="${it.id}">${it.deploy!==false?"移出本關（資料保留）":"＋ 加入本關"}</button>
     </div>`).join("");
 }
 const SPELL_FIELD_ROWS = {
@@ -2051,9 +2076,12 @@ const SPELL_FIELD_ROWS = {
 };
 function renderSpellsEditor(){
   $("#ent-spells").innerHTML = spells.map(sp=>`
-    <div class="tune-card ent-card">
-      <button class="ent-del" data-del-spell="${sp.id}">刪除</button>
-      <h3>${esc(sp.name)}${sp.deploy!==false?'<span class="dep-badge">已加入本關</span>':'<span class="dep-badge off">未加入本關</span>'}</h3>
+    <div class="tune-card ent-card ${entOpen.has(sp.id)?"open":""}" data-ent-id="${sp.id}">
+      <div class="ent-top">
+        <button class="ent-quick" data-dep-ent="spell" data-dep-id="${sp.id}">${sp.deploy!==false?"移出":"＋ 加入"}</button>
+        <button class="ent-del" data-del-spell="${sp.id}">刪除</button>
+      </div>
+      <h3>${esc(sp.name)}${sp.deploy!==false?'<span class="dep-badge">已加入本關</span>':'<span class="dep-badge off">未加入本關</span>'}<span class="ent-sum">${SPELL_TYPES[sp.type]||""} · 檢定 ${sp.chk} · SAN −${sp.san}</span></h3>
       <div class="tune-row"><span>名稱</span>
         <input type="text" data-ent="spell" data-id="${sp.id}" data-field="name" value="${esc(sp.name)}"></div>
       <div class="tune-row"><span>類型</span>
@@ -2067,14 +2095,16 @@ function renderSpellsEditor(){
       ${numRow("SAN 消耗","spell",sp.id,"san",sp.san)}
       ${(SPELL_FIELD_ROWS[sp.type]||[]).map(([label,f])=>numRow(label,"spell",sp.id,f,sp[f])).join("")}
       <div class="ent-derived">${spellDesc(sp)}<br>叠杯大成功時效果 × 大成功倍率</div>
-      <button class="btn ghost sm dep-btn" data-dep-ent="spell" data-dep-id="${sp.id}">${sp.deploy!==false?"移出本關（資料保留）":"＋ 加入本關"}</button>
     </div>`).join("");
 }
 function renderOutfitsEditor(){
   $("#ent-outfits").innerHTML = outfits.map(o=>`
-    <div class="tune-card ent-card">
-      <button class="ent-del" data-del-outfit="${o.id}">刪除</button>
-      <h3>${esc(o.name)}${o.id===activeOutfitId?'<span style="font-size:11px;color:var(--gold);margin-left:8px;letter-spacing:.15em">著裝中</span>':""}</h3>
+    <div class="tune-card ent-card ${entOpen.has(o.id)?"open":""}" data-ent-id="${o.id}">
+      <div class="ent-top">
+        ${o.id===activeOutfitId?"":`<button class="ent-quick" data-wear="${o.id}">著裝</button>`}
+        <button class="ent-del" data-del-outfit="${o.id}">刪除</button>
+      </div>
+      <h3>${esc(o.name)}${o.id===activeOutfitId?'<span class="dep-badge">著裝中</span>':'<span class="dep-badge off">未著裝</span>'}<span class="ent-sum">防禦 +${o.def||0}${o.buffStat&&o.buffVal?` · ${esc(o.buffStat)} +${o.buffVal}`:""}</span></h3>
       <div class="tune-row"><span>名稱</span>
         <input type="text" data-ent="outfit" data-id="${o.id}" data-field="name" value="${esc(o.name)}"></div>
       ${numRow("固定防禦","outfit",o.id,"def",o.def)}
@@ -2086,7 +2116,6 @@ function renderOutfitsEditor(){
       ${numRow("加成值","outfit",o.id,"buffVal",o.buffVal)}
       <div class="tune-row"><span>來源說明</span>
         <input type="text" data-ent="outfit" data-id="${o.id}" data-field="src" value="${esc(o.src||"")}"></div>
-      ${o.id===activeOutfitId?"":`<button class="btn ghost sm" style="margin-top:10px;width:100%" data-wear="${o.id}">著　裝</button>`}
     </div>`).join("");
 }
 function renderRoster(){
@@ -2118,8 +2147,10 @@ const EVENT_FIELD_ROWS = {
 function renderEventsEditor(){
   ENC.events.forEach(ev=>{ if(!monsters.some(m=>m.id===ev.monsterId)) ev.monsterId=monsters[0]?.id; });
   $("#enc-events").innerHTML = ENC.events.map(ev=>`
-    <div class="tune-card ent-card">
-      <button class="ent-del" data-del-event="${ev.id}">刪除</button>
+    <div class="tune-card ent-card ${entOpen.has(ev.id)?"open":""}" data-ent-id="${ev.id}">
+      <div class="ent-top">
+        <button class="ent-del" data-del-event="${ev.id}">刪除</button>
+      </div>
       <h3>第 ${Math.round(ev.round)} 回合 · ${EVENT_TYPES[ev.type]||""}</h3>
       ${numRow("觸發回合","event",ev.id,"round",ev.round)}
       <div class="tune-row"><span>事件類型</span>
@@ -2142,28 +2173,33 @@ function renderEditors(){ renderMatesEditor(); renderMonstersEditor(); renderIte
 
 /* ---- 新增 ---- */
 $("#add-mate").addEventListener("click",()=>{
-  mates.push(hydrateMate({id:uid("m"), name:"新角色", idn:"人", role:"自訂角色", in:false, deploy:false,
-    stats:{體魄:10,武藝:10,輕捷:10,靈術:10,意志:10}, detail:"企劃自訂角色。"}));
+  const nm=hydrateMate({id:uid("m"), name:"新角色", idn:"人", role:"自訂角色", in:false, deploy:false,
+    stats:{體魄:10,武藝:10,輕捷:10,靈術:10,意志:10}, detail:"企劃自訂角色。"});
+  mates.push(nm); entOpen.add(nm.id);
   renderMatesEditor(); renderMates();
   toast("已新增角色至資料庫（按「加入本關」讓角色登場）");
 });
 $("#add-monster").addEventListener("click",()=>{
-  monsters.push({id:uid("mon"), name:"新怪物", idn:"鬼", hp:100, art:10, defV:0, agiP:8, lv:2, T:1, sFix:CFG_DEFAULT.npcS, sHit:CFG_DEFAULT.npcSHit});
+  const nmon={id:uid("mon"), name:"新怪物", idn:"鬼", hp:100, art:10, defV:0, agiP:8, lv:2, T:1, sFix:CFG_DEFAULT.npcS, sHit:CFG_DEFAULT.npcSHit};
+  monsters.push(nmon); entOpen.add(nmon.id);
   renderMonstersEditor(); renderEncounter();
   toast("已新增怪物（記得加入出戰序列）");
 });
 $("#add-spell").addEventListener("click",()=>{
-  spells.push({id:uid("s"), name:"新靈術", san:2, chk:"靈術", type:"dmg", vmin:10, vmax:16, stun:0, dur:0, deploy:false});
+  const ns={id:uid("s"), name:"新靈術", san:2, chk:"靈術", type:"dmg", vmin:10, vmax:16, stun:0, dur:0, deploy:false};
+  spells.push(ns); entOpen.add(ns.id);
   renderSpellsEditor(); renderSpells();
   toast("已新增靈術至資料庫（按「加入本關」使其可用）");
 });
 $("#add-outfit").addEventListener("click",()=>{
-  outfits.push({id:uid("o"), name:"新服裝", def:0, buffStat:"", buffVal:0, src:"企劃自訂"});
+  const no={id:uid("o"), name:"新服裝", def:0, buffStat:"", buffVal:0, src:"企劃自訂"};
+  outfits.push(no); entOpen.add(no.id);
   renderOutfitsEditor();
   toast("已新增服裝（按「著裝」設為當前裝束）");
 });
 $("#add-item").addEventListener("click",()=>{
-  items.push({id:uid("i"), name:"新道具", effect:"heal", val:10, cnt:1, carry:false, deploy:false});
+  const ni={id:uid("i"), name:"新道具", effect:"heal", val:10, cnt:1, carry:false, deploy:false};
+  items.push(ni); entOpen.add(ni.id);
   renderItemsEditor(); renderItems();
   toast("已新增道具至資料庫（按「加入本關」使其可得）");
 });
@@ -2240,7 +2276,8 @@ document.addEventListener("click",e=>{
 });
 $("#add-event").addEventListener("click",()=>{
   harvestEntities();
-  ENC.events.push({id:uid("ev"), round:2, type:"paralyze", val:1, monsterId:monsters[0]?.id, text:""});
+  const nev={id:uid("ev"), round:2, type:"paralyze", val:1, monsterId:monsters[0]?.id, text:""};
+  ENC.events.push(nev); entOpen.add(nev.id);
   renderEventsEditor();
   toast("已新增事件（預設：第 2 回合玩家麻痺 1 回合）");
 });
@@ -2627,14 +2664,16 @@ function applyTuneFilter(){
     let vis=false;
     sec.querySelectorAll(".tune-card").forEach(card=>{
       const rows=[...card.querySelectorAll(".tune-row")];
-      if(!q || headMatch){ card.classList.remove("hf"); rows.forEach(r=>r.classList.remove("hf")); vis=true; return; }
+      if(!q || headMatch){ card.classList.remove("hf","s-open"); rows.forEach(r=>r.classList.remove("hf")); vis=true; return; }
       const titleMatch=(card.querySelector("h3")?.textContent||"").toLowerCase().includes(q);
       const hit=rows.filter(r=>r.textContent.toLowerCase().includes(q));
       if(titleMatch || (!rows.length && card.textContent.toLowerCase().includes(q))){
         card.classList.remove("hf"); rows.forEach(r=>r.classList.remove("hf")); vis=true;
+        card.classList.toggle("s-open", hit.length>0 && !titleMatch);
       }else if(hit.length){
         card.classList.remove("hf"); rows.forEach(r=>r.classList.toggle("hf",!hit.includes(r))); vis=true;
-      }else card.classList.add("hf");
+        card.classList.add("s-open");
+      }else{ card.classList.add("hf"); card.classList.remove("s-open"); }
     });
     sec.classList.toggle("hf", !!q && !vis && !headMatch);
   });
