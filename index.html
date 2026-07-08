@@ -287,6 +287,7 @@ h1.title{font-family:var(--serif);font-weight:900;font-size:26px;letter-spacing:
 .sub-item:disabled{opacity:.4;cursor:not-allowed}
 .sub-item .n{font-weight:700;font-size:13px}
 .sub-item .m{font-size:11px;color:var(--ash)}
+.sub-item .m.eff{color:var(--paper);opacity:.9;margin:3px 0 2px}
 .sub-item .m b{color:var(--yin);font-weight:500}
 .sub-cancel{border:1px dashed var(--line);color:var(--ash-dim);padding:8px 14px;border-radius:4px;font-size:12px;letter-spacing:.2em}
 
@@ -695,7 +696,6 @@ h1.title{font-family:var(--serif);font-weight:900;font-size:26px;letter-spacing:
     <input type="search" id="tune-search" placeholder="搜尋參數／名稱（例：閃避、成功率、怪物名）" autocomplete="off">
     <button class="btn" id="btn-apply">套用設定</button>
     <button class="btn ghost" id="btn-reset-cfg">恢復預設</button>
-    <button class="btn danger" id="btn-sim">批次模擬 1000 場</button>
     <button class="btn ghost" id="btn-export">匯出參數 JSON</button>
     <button class="btn ghost" id="btn-import">匯入參數 JSON</button>
     <button class="btn ghost" id="btn-clear-ls">清除瀏覽器暫存</button>
@@ -774,8 +774,15 @@ h1.title{font-family:var(--serif);font-weight:900;font-size:26px;letter-spacing:
       </div>
 
       <div class="tune-group" id="group-sim">
-        <div class="tune-group-head">驗證<small>按工具列「批次模擬 1000 場」產生統計</small></div>
+        <div class="tune-group-head">驗證<small>不看演出直接跑 1000 場，統計勝率與回合分布；執行前會自動套用目前修改</small></div>
         <div class="tune-sec" id="sec-sim">
+          <div class="tune-grid" style="grid-template-columns:minmax(270px,480px);margin-bottom:14px">
+            <div class="tune-card">
+              <h3>批次模擬</h3>
+              <div class="ent-derived" style="margin-top:8px">以目前參數與「關卡編成」的出戰序列進行，結果顯示於下方。</div>
+              <button class="btn danger" id="btn-sim" style="margin-top:12px;width:100%">批次模擬 1000 場</button>
+            </div>
+          </div>
           <div class="card sim-box" id="sim-box" style="display:none">
             <h3>模擬結果</h3>
             <table class="sim-table" id="sim-table"></table>
@@ -1533,7 +1540,8 @@ function openSpellMenu(){
   s.innerHTML = usable.map(sp=>`
     <button class="sub-item" data-spell="${sp.id}" ${battle.hero.san<sp.san?"disabled":""}>
       <div class="n">${esc(sp.name)}<span style="font-size:10px;color:var(--ash-dim);margin-left:6px">${SPELL_TYPES[sp.type]||""}</span></div>
-      <div class="m">檢定 ${esc(sp.chk)} · 理智 <b>−${sp.san}</b>${battle.hero.san<sp.san?" · 理智不足":""}</div>
+      <div class="m eff">${spellDesc(sp)}</div>
+      <div class="m">檢定 ${esc(sp.chk)} · 理智 <b>−${sp.san}</b> · 叠杯大成功效果 ×${CFG.critMul}${battle.hero.san<sp.san?" · <b style='color:#f3b9a8'>理智不足</b>":""}</div>
     </button>`).join("") + `<button class="sub-cancel">取消</button>`;
   s.classList.add("show");
   s.onclick=e=>{
@@ -1550,8 +1558,9 @@ function openItemMenu(){
   if(!battle.items.filter(i=>i.cnt>0).length){ toast("未攜帶可用道具"); return; }
   s.innerHTML = battle.items.map(it=>`
     <button class="sub-item" data-item="${it.id}" ${it.cnt<=0?"disabled":""}>
-      <div class="n">${esc(it.name)} × ${it.cnt}</div>
-      <div class="m">${itemDesc(it)}</div>
+      <div class="n">${esc(it.name)}<span style="font-size:10px;color:var(--ash-dim);margin-left:6px">剩餘 ×${it.cnt}</span></div>
+      <div class="m eff">${itemDesc(it)}</div>
+      <div class="m">對我方單體使用 · 不需檢定、不耗理智${it.cnt<=0?" · <b style='color:#f3b9a8'>已用罄</b>":""}</div>
     </button>`).join("") + `<button class="sub-cancel">取消</button>`;
   s.classList.add("show");
   s.onclick=e=>{
@@ -2031,7 +2040,9 @@ function renderMonstersEditor(){
   $("#ent-monsters").innerHTML = monsters.map(md=>`
     <div class="tune-card ent-card ${entOpen.has(md.id)?"open":""}" data-ent-id="${md.id}">
       <div class="ent-top">
-        <button class="ent-quick" data-ros-add="${md.id}">＋ 編入</button>
+        ${ENC.roster.includes(md.id)
+          ? `<button class="ent-quick" data-ros-rm="${md.id}">移出</button>`
+          : `<button class="ent-quick" data-ros-add="${md.id}">＋ 編入</button>`}
         <button class="ent-del" data-del-monster="${md.id}">刪除</button>
       </div>
       <h3>${esc(md.name)}${(n=>n>0?`<span class="dep-badge">已編入本關 ×${n}</span>`:'<span class="dep-badge off">未編入本關</span>')(ENC.roster.filter(id=>id===md.id).length)}<span class="ent-sum">${md.idn} · HP ${md.hp} · 武藝 ${md.art} · 護甲 ${md.defV} · Lv${md.lv}</span></h3>
@@ -2264,6 +2275,14 @@ document.addEventListener("click",e=>{
     ENC.roster.push(ra.dataset.rosAdd);
     renderRoster(); renderMonstersEditor();
     toast("已編入出戰序列（可至「關卡編成」調整順序）"); return;
+  }
+  const rr=e.target.closest("[data-ros-rm]");
+  if(rr){
+    harvestEntities();
+    const id=rr.dataset.rosRm, n=ENC.roster.filter(x=>x===id).length;
+    ENC.roster=ENC.roster.filter(x=>x!==id);
+    renderRoster(); renderMonstersEditor();
+    toast(n>1?`已自出戰序列移出（含重複 ×${n}）`:"已自出戰序列移出（資料保留）"); return;
   }
   const up=e.target.closest("[data-ros-up]");
   if(up){ const i=+up.dataset.rosUp; [ENC.roster[i-1],ENC.roster[i]]=[ENC.roster[i],ENC.roster[i-1]]; renderRoster(); return; }
