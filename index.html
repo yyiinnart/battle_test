@@ -288,6 +288,11 @@ h1.title{font-family:var(--serif);font-weight:900;font-size:26px;letter-spacing:
 .sub-item .n{font-weight:700;font-size:13px}
 .sub-item .m{font-size:11px;color:var(--ash)}
 .sub-item .m.eff{color:var(--paper);opacity:.9;margin:3px 0 2px}
+/* 模擬報告 */
+.sim-report{margin-top:14px;border-top:1px solid var(--line);padding-top:12px}
+.sim-rp-row{font-size:12.5px;line-height:1.8;color:var(--ash);padding:6px 0;border-bottom:1px dashed var(--line-soft)}
+.sim-rp-row:last-child{border-bottom:none}
+.sim-rp-row b{color:var(--gold-pale);font-weight:700}
 .sub-item .m b{color:var(--yin);font-weight:500}
 .sub-cancel{border:1px dashed var(--line);color:var(--ash-dim);padding:8px 14px;border-radius:4px;font-size:12px;letter-spacing:.2em}
 
@@ -786,6 +791,7 @@ h1.title{font-family:var(--serif);font-weight:900;font-size:26px;letter-spacing:
           <div class="card sim-box" id="sim-box" style="display:none">
             <h3>模擬結果</h3>
             <table class="sim-table" id="sim-table"></table>
+            <div class="sim-report" id="sim-report"></div>
             <div class="sim-note">模擬採用「自動戰鬥」策略：玩家每回合以武藝行動，QTE 依目標敵人等級實際生成序列後以命中機率逐個抽樣；傷害走《戰鬥系統運算 1.0》公式（S 曲線、克制 R、閃避 DC、護甲 Def、保底 1 傷）；隊友／敵人先擲攻擊成功率（未過落空），命中時以各自的「命中時 S」× T 結算；先後手由開場輕捷判定決定。出戰序列與關卡事件（麻痺／全體傷害／增援／敵方回復）均已納入模擬。80 回合未分勝負計為「僵局」。</div>
           </div>
         </div>
@@ -2643,6 +2649,72 @@ function simulateOne(){
   }
   return {result:"draw",round,heroHp:H.hp,dmgDealt,dmgTaken};
 }
+/* ---- 規則式模擬報告：不串 API，純門檻判讀，向企劃說明數字含意 ---- */
+function simReport(o){
+  // o: {winP, loseP, drawP, avgRound, winHpPct, dealt, taken, hpMax}
+  const P=[];
+  // 1. 難度分級（以勝率為主軸）
+  let tier, tierNote;
+  if(o.winP>=95){ tier="無威脅"; tierNote="幾乎不可能失敗，適合教學戰或劇情演出戰。"; }
+  else if(o.winP>=85){ tier="輕鬆"; tierNote="偶爾失手才會輸，適合一般雜魚遭遇戰。"; }
+  else if(o.winP>=70){ tier="標準"; tierNote="多數 RPG 普通戰鬥的建議區間（70–85%）。"; }
+  else if(o.winP>=50){ tier="偏難"; tierNote="玩家需要正確操作與資源管理，適合精英戰。"; }
+  else if(o.winP>=30){ tier="Boss 級"; tierNote="預期玩家會失敗數次，適合關底頭目。"; }
+  else { tier="極難"; tierNote="平均要重試 " + (o.winP>0?Math.round(100/o.winP):"∞") + " 次以上才能通過，若非刻意設計的挑戰戰，建議調鬆。"; }
+  P.push(`<b>難度定位：${tier}</b>——勝率 ${o.winP.toFixed(1)}%。${tierNote}`);
+
+  // 2. 勝場餘裕（贏的時候剩多少血）
+  if(o.winP>0){
+    let m;
+    if(o.winHpPct>=75)      m="即使獲勝也近乎無傷，戰鬥缺乏壓力。";
+    else if(o.winHpPct>=50) m="獲勝時保有餘裕，體感健康。";
+    else if(o.winHpPct>=25) m="獲勝時血線緊繃，玩家會明顯感受到威脅。";
+    else                    m="獲勝也是瀕死過關——連贏的場次都在死亡邊緣，強度整體壓著玩家。";
+    P.push(`<b>勝場餘裕：</b>贏的場次平均剩 ${o.winHpPct.toFixed(0)}% HP。${m}`);
+  }
+
+  // 3. 生存壓力（承傷對照滿血）
+  const tr = o.hpMax>0 ? o.taken/o.hpMax : 0;
+  let sv;
+  if(tr>=1)        sv=`平均一場承受 ${o.taken.toFixed(0)} 傷害，已達滿血 ${o.hpMax} 的 ${(tr*100).toFixed(0)}%——<b>多數場次玩家會被打到死亡線</b>，這通常就是敗率的主因。`;
+  else if(tr>=0.7) sv=`平均承傷 ${o.taken.toFixed(0)}，約為滿血的 ${(tr*100).toFixed(0)}%，沒有回復手段的話容錯極低。`;
+  else if(tr>=0.4) sv=`平均承傷 ${o.taken.toFixed(0)}，約為滿血的 ${(tr*100).toFixed(0)}%，屬於有威脅但可承受的範圍。`;
+  else             sv=`平均承傷 ${o.taken.toFixed(0)}，僅為滿血的 ${(tr*100).toFixed(0)}%，敵方輸出偏低。`;
+  P.push(`<b>生存壓力：</b>${sv}`);
+
+  // 4. 節奏（回合數）
+  let pace;
+  if(o.avgRound<3)       pace="速戰速決。注意：回合這麼短時，敗因多半是「開場一兩下被打穿」的爆發，而非消耗戰，平均值看不出爆發——建議肉眼跑幾場確認。";
+  else if(o.avgRound<=6) pace="標準節奏，玩家有時間做出戰術選擇。";
+  else if(o.avgRound<=10)pace="偏長，注意是否因雙方輸出都低而拖成磨戰。";
+  else                   pace="過長，戰鬥可能陷入拉鋸，建議檢查雙方輸出與回復量是否互相抵銷。";
+  P.push(`<b>戰鬥節奏：</b>平均 ${o.avgRound.toFixed(1)} 回合。${pace}`);
+
+  // 5. 僵局
+  if(o.drawP>0) P.push(`<b>僵局警示：</b>${o.drawP.toFixed(1)}% 的場次打滿 80 回合未分勝負，代表存在「誰都打不死誰」的組合，通常是回復量 ≥ 輸出量造成，建議優先排除。`);
+
+  // 6. 攻守比
+  const ratio = o.taken>0 ? o.dealt/o.taken : Infinity;
+  P.push(`<b>攻守比：</b>輸出 ${o.dealt.toFixed(0)} vs 承傷 ${o.taken.toFixed(0)}（${isFinite(ratio)?ratio.toFixed(1):"∞"} : 1）。${
+    ratio>=3 ? "玩家火力明顯壓制。" :
+    ratio>=1.5 ? "玩家佔優但敵方仍有存在感。" :
+    ratio>=0.8 ? "互換等價，戰局取決於誰先倒下——搭配上面的生存壓力一起看。" :
+    "敵方輸出效率高於玩家，玩家在打消耗必輸的仗。"}`);
+
+  // 7. 調參建議（依最偏離的面向給 1–2 個具體旋鈕）
+  const sug=[];
+  if(o.winP<50){
+    if(tr>=0.8) sug.push("敗率高且承傷貼近滿血 → 優先調低怪物的「命中時 S」或「T 暗調參數」（怪物庫內），這兩個直接決定敵方每次命中的傷害量");
+    else sug.push("敗率高但承傷不高 → 問題可能在玩家輸出不足或檢定成功率偏低，檢查全域的攻擊成功率與玩家公式係數");
+    if(o.winHpPct<25&&o.winP>0) sug.push("連勝場都瀕死 → 考慮在靈術「加入本關」一個回復或護體類，直接墊高容錯");
+  } else if(o.winP>90&&o.winHpPct>75){
+    sug.push("勝率與餘裕都過高 → 若非刻意的無威脅戰，可調升怪物 HP 或命中時 S，讓玩家至少掉 30–50% 血才有戰鬥感");
+  }
+  if(sug.length) P.push(`<b>調參方向：</b>${sug.join("；")}。改動後重跑模擬對比勝率變化，一次只動一個變因。`);
+
+  return P.map(t=>`<div class="sim-rp-row">${t}</div>`).join("");
+}
+
 $("#btn-sim").addEventListener("click",()=>{
   applyInputs();
   if(!buildSpawns().length){ toast("出戰序列為空，請先於關卡編成加入怪物"); return; }
@@ -2663,6 +2735,16 @@ $("#btn-sim").addEventListener("click",()=>{
     <tr><td>勝場平均剩餘 HP</td><td>${avg(wins,r=>r.heroHp).toFixed(1)} / ${hpMax}（${hpMax?(avg(wins,r=>r.heroHp)/hpMax*100).toFixed(0):0}%）</td></tr>
     <tr><td>平均對敵輸出／場</td><td>${avg(rs,r=>r.dmgDealt).toFixed(0)}</td></tr>
     <tr><td>玩家平均承傷／場</td><td>${avg(rs,r=>r.dmgTaken).toFixed(0)}</td></tr>`;
+  $("#sim-report").innerHTML = simReport({
+    winP: wins.length/N*100,
+    loseP: loses.length/N*100,
+    drawP: draws.length/N*100,
+    avgRound: avg(rs,r=>r.round),
+    winHpPct: hpMax? avg(wins,r=>r.heroHp)/hpMax*100 : 0,
+    dealt: avg(rs,r=>r.dmgDealt),
+    taken: avg(rs,r=>r.dmgTaken),
+    hpMax
+  });
   $("#sim-box").style.display="block";
   $("#apply-hint").textContent="已套用並完成模擬";
 });
