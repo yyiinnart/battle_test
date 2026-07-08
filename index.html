@@ -491,7 +491,7 @@ h1.title{font-family:var(--serif);font-weight:900;font-size:26px;letter-spacing:
         <div class="prep-pane active" id="pane-squad">
           <div class="squad-count">同時在場隊友 <b id="squad-n">2</b> / 3 · 點擊卡片切換出戰，點「檢視」展開數值</div>
           <div class="mate-list" id="mate-list"></div>
-          <div class="note-line">入隊的隊友於戰鬥中自動輔助攻擊，無法直接操控；隊友不進行 QTE，改以「固定 S 值」（預設 0.7，可於「數值測試」頁依角色個別調整）代入傷害公式。</div>
+          <div class="note-line">入隊的隊友於戰鬥中自動輔助攻擊，無法直接操控；隊友不進行 QTE，出手先擲「攻擊成功率」判定（預設 0.7，可於「數值測試」頁依角色個別調整），未過則整次落空，命中時同值代入傷害公式的 S。</div>
         </div>
 
         <!-- 服裝 -->
@@ -587,7 +587,7 @@ h1.title{font-family:var(--serif);font-weight:900;font-size:26px;letter-spacing:
 
     <h2>判定與傷害公式（《戰鬥系統運算 1.0》）</h2>
     <ul>
-      <li><b>S 值</b>：S = 0.15 + 0.8 ×（n／N）^0.55，n 為 QTE 成功個數、N 為 QTE 總數。隊友與敵人不做 QTE，使用固定 S（預設 0.7，每個角色可個別覆寫——回應運算文件中「可否做成變量」的註記，原型已做成逐角色欄位）。</li>
+      <li><b>S 值</b>：S = 0.15 + 0.8 ×（n／N）^0.55，n 為 QTE 成功個數、N 為 QTE 總數。隊友與敵人不做 QTE，改為「攻擊成功率」判定：出手先擲一次機率（預設 0.7，每個角色可個別覆寫——回應運算文件中「可否做成變量」的註記），未過則整次落空、不觸發閃避；命中時同值代入公式 S，因此命中時的傷害數字與原「固定 S」版一致。</li>
       <li><b>玩家</b>：Damage = B/20 × {[M(1−e^(−K·S))·R] − Def} × DC × F × N。F 與 N 兩個係數文件未附定義，原型暫置 1 並開放於調參台調整。</li>
       <li><b>隊友／敵人</b>：Damage = B/20 × {[M(1−e^(−K·S))·R] − Def} × DC × T，T 為逐角色暗調參數。</li>
       <li><b>R 克制</b>：天→地→人→鬼→天，克制 ×1.3、被克制 ×0.7、對位與同位 ×1。</li>
@@ -678,14 +678,16 @@ h1.title{font-family:var(--serif);font-weight:900;font-size:26px;letter-spacing:
     <button class="btn danger" id="btn-sim">批次模擬 1000 場</button>
     <button class="btn ghost" id="btn-export">匯出參數 JSON</button>
     <button class="btn ghost" id="btn-import">匯入參數 JSON</button>
+    <button class="btn ghost" id="btn-clear-ls">清除瀏覽器暫存</button>
     <input type="file" id="import-file" accept="application/json,.json" style="display:none">
     <span class="hint" id="apply-hint">修改後尚未套用</span>
+    <span class="hint" id="ls-hint" style="opacity:.75">參數會自動暫存於此瀏覽器；匯出 JSON 供備份或傳給隊友</span>
   </div>
 
   <div class="card sim-box" id="sim-box" style="display:none">
     <h3>模擬結果</h3>
     <table class="sim-table" id="sim-table"></table>
-    <div class="sim-note">模擬採用「自動戰鬥」策略：玩家每回合以武藝行動，QTE 依目標敵人等級實際生成序列後以命中機率逐個抽樣；傷害走《戰鬥系統運算 1.0》公式（S 曲線、克制 R、閃避 DC、護甲 Def、保底 1 傷）；隊友／敵人以固定 S × T 結算；先後手由開場輕捷判定決定。出戰序列與關卡事件（麻痺／全體傷害／增援／敵方回復）均已納入模擬。80 回合未分勝負計為「僵局」。</div>
+    <div class="sim-note">模擬採用「自動戰鬥」策略：玩家每回合以武藝行動，QTE 依目標敵人等級實際生成序列後以命中機率逐個抽樣；傷害走《戰鬥系統運算 1.0》公式（S 曲線、克制 R、閃避 DC、護甲 Def、保底 1 傷）；隊友／敵人先擲攻擊成功率（未過落空），命中時以同值代入 S × T 結算；先後手由開場輕捷判定決定。出戰序列與關卡事件（麻痺／全體傷害／增援／敵方回復）均已納入模擬。80 回合未分勝負計為「僵局」。</div>
   </div>
 </section>
 
@@ -765,7 +767,7 @@ const CFG_DEFAULT = {
   pF:1, pNf:1,                          // 玩家公式的 F、N 係數（文件未附定義，暫置 1）
   counterMul:1.3, counteredMul:0.7,     // R：克制 1.3／被克制 0.7／其他 1
   dcOk:0.5, dcFumble:1.5,               // DC：閃避 大成功0／成功0.5／失敗1／大失敗1.5
-  npcS:0.7,                             // 隊友／敵人固定 S 預設值（各角色可個別覆寫）
+  npcS:0.7,                             // 隊友／敵人攻擊成功率預設值（未過則落空；命中時同值代入公式 S，各角色可覆寫）
   critMul:1.5,                          // 叠杯（大成功）倍率——現僅用於靈術等問杯檢定
   qteBpm:120,                           // QTE 節拍框架：間隔 = 60/BPM × 隨機{1, 1/2, 1/4}拍（音樂節點檔到位後替換）
   simQteHitRate:0.7,                    // 自動戰鬥／批次模擬：單個 QTE 命中機率
@@ -825,14 +827,14 @@ function hydrateMate(m){
   x.hpMax=x.stats.體魄*5; x.hp=x.hpMax;
   x.sanMax=x.stats.意志; x.san=x.sanMax;
   x.avatar=(x.name||"？")[0];
-  if(x.sFix==null) x.sFix=CFG_DEFAULT.npcS;   // 固定 S（運算文件註記：可依各角色做成變量）
+  if(x.sFix==null) x.sFix=CFG_DEFAULT.npcS;   // 攻擊成功率（未過則落空；命中時代入公式 S）
   if(x.T==null) x.T=1;                        // T 暗調參數
   return x;
 }
 let mates = MATES_DEFAULT.map(hydrateMate);
 
 /* 怪物欄位（新公式）：art=武藝 B、defV=護甲 Def、agiP=輕捷（閃避 DC 判定）、
-   lv=敵人等級 1–5（決定 QTE 窗口／數量／連打）、T=暗調參數、sFix=固定 S */
+   lv=敵人等級 1–5（決定 QTE 窗口／數量／連打）、T=暗調參數、sFix=攻擊成功率 */
 const MONSTERS_DEFAULT = [
   {id:"mon1", name:"敵人A", idn:"鬼", hp:320, art:10, defV:0, agiP:8, lv:2, T:1, sFix:0.7},
 ];
@@ -1610,15 +1612,19 @@ function dealToUnit(u, dmg){
 
 /* ================= 隊友／敵方行動 ================= */
 async function mateAct(m){
-  // 《戰鬥系統運算 1.0》隊友公式：B/20 × {[M(1−e^(−K·S))·R] − Def} × DC × T，S 為固定值（各角色可調）
+  // 成功率判定：sFix 為出手成功率，未過則整次落空；命中時同值代入公式 S
   const useSpell = m.stats.靈術>m.stats.武藝;
   const alive=aliveEnemies(); if(!alive.length) return;
   const target=alive[rnd(0,alive.length-1)];
+  const rate = m.sFix ?? CFG.npcS;
+  if(Math.random()>=rate){
+    log(`${esc(m.name)}的${useSpell?"靈術":"攻勢"}落空`);
+    return;
+  }
   const B = Math.max(m.stats.武藝, m.stats.靈術) + (m.atkBuff?m.atkBuff.val:0);
-  const S = m.sFix ?? CFG.npcS;
   const R = counterR(m.idn, target.idn);
   const ev = dcResolve(target.def.agiP);
-  const dmg = coreDamage(B, S, R, target.def.defV||0, ev.dc, m.T ?? 1);
+  const dmg = coreDamage(B, rate, R, target.def.defV||0, ev.dc, m.T ?? 1);
   if(dmg<=0){ log(`${esc(m.name)}的攻勢被${esc(target.name)}閃過`); return; }
   dealToEnemy(target, dmg, ev.tier==="fumble");
   log(`${esc(m.name)}${useSpell?"引動靈術":"揮刀突進"}${ev.txt?`，${ev.txt}`:""} —— 對${esc(target.name)}造成 <span class="dmg">${dmg}</span> 傷害${R>1?COUNTER_TAG:""}`);
@@ -1629,11 +1635,16 @@ async function enemyActOne(en){
   if(en.stunned>0){
     en.stunned--; log(`${esc(en.name)}被控制效果限制，無法行動`,"sys"); return;
   }
-  // 《戰鬥系統運算 1.0》敵人公式：B/20 × {[M(1−e^(−K·S))·R] − Def} × DC × T，S 為固定值；命中與否由防守方 DC 判定體現
+  // 成功率判定：sFix 為出手成功率，未過則整次落空（不觸發閃避）；命中時同值代入公式 S
   const pool=[battle.hero,...battle.mates.filter(m=>m.hp>0)];
   if(!pool.filter(u=>u.hp>0).length) return;
   const t=pool[rnd(0,pool.length-1)];
   const tName = t.id==="hero"?"你":esc(t.name);
+  const rate = en.def.sFix ?? CFG.npcS;
+  if(Math.random()>=rate){
+    log(`${esc(en.name)}撲向 ${tName} —— 攻擊落空`);
+    return;
+  }
   let B=en.def.art||10;
   if(en.atkDown) B=Math.max(1, B-en.atkDown.val);
   const R = counterR(en.idn, t.idn);
@@ -1646,7 +1657,7 @@ async function enemyActOne(en){
     await poeShow("閃避 · 輕捷檢定", ev.tier);
     log(`你的閃避 —— ${TIER_HTML[ev.tier]}`,"me");
   }
-  const dmg = coreDamage(B, en.def.sFix ?? CFG.npcS, R, tDef, ev.dc, en.def.T ?? 1);
+  const dmg = coreDamage(B, rate, R, tDef, ev.dc, en.def.T ?? 1);
   if(dmg<=0){
     if(t.id==="hero") log(`身形一側 —— 你完全閃開了${esc(en.name)}的攻擊`,"me");
     else log(`${esc(en.name)}撲向 ${tName} —— 被完全閃開`);
@@ -1813,8 +1824,8 @@ const GENERAL_SCHEMA = [
     ["R 克制倍率","counterMul"],["R 被克制倍率","counteredMul"],
     ["DC 閃避成功係數","dcOk"],["DC 閃避大失敗係數","dcFumble"],
     ["叠杯大成功倍率（靈術等問杯檢定）","critMul"]]},
-  {title:"隊友／敵人固定 S 與 QTE 節拍", rows:[
-    ["固定 S 預設值（各角色可個別覆寫）","npcS"],
+  {title:"隊友／敵人成功率與 QTE 節拍", rows:[
+    ["攻擊成功率預設值（未過則落空；命中時代入公式 S，各角色可覆寫）","npcS"],
     ["QTE 節拍 BPM（間隔＝60/BPM×隨機{1,½,¼}拍）","qteBpm"]]},
   {title:"自動戰鬥／批次模擬", rows:[
     ["單個 QTE 命中機率（0–1）","simQteHitRate"]]},
@@ -1888,7 +1899,7 @@ function renderMatesEditor(){
         <input type="text" data-ent="mate" data-id="${m.id}" data-field="name" value="${esc(m.name)}"></div>
       <div class="tune-row"><span>身份</span>${idnSelect("mate",m.id,m.idn)}</div>
       ${MATE_STAT_KEYS.map(k=>numRow(k,"mate",m.id,k,m.stats[k])).join("")}
-      ${numRow("固定 S（運算文件：可依角色調整）","mate",m.id,"sFix",m.sFix??CFG_DEFAULT.npcS)}
+      ${numRow("攻擊成功率（0–1，未過則落空；命中時代入公式 S）","mate",m.id,"sFix",m.sFix??CFG_DEFAULT.npcS)}
       ${numRow("T 暗調參數","mate",m.id,"T",m.T??1)}
       <div class="ent-derived">HP 上限 = 體魄 × 5 → <b style="color:var(--paper)">${m.hpMax}</b>　SAN 上限 = 意志 → <b style="color:var(--paper)">${m.sanMax}</b><br>傷害 B 取武藝／靈術較高者，代入隊友公式（×T，S 固定）</div>
     </div>`).join("");
@@ -1906,7 +1917,7 @@ function renderMonstersEditor(){
       ${numRow("護甲 Def","monster",md.id,"defV",md.defV)}
       ${numRow("輕捷 P（閃避 DC／先手）","monster",md.id,"agiP",md.agiP)}
       ${numRow("敵人等級（1–5，決定 QTE 難度）","monster",md.id,"lv",md.lv)}
-      ${numRow("固定 S","monster",md.id,"sFix",md.sFix??CFG_DEFAULT.npcS)}
+      ${numRow("攻擊成功率（0–1，命中時代入公式 S）","monster",md.id,"sFix",md.sFix??CFG_DEFAULT.npcS)}
       ${numRow("T 暗調參數","monster",md.id,"T",md.T??1)}
     </div>`).join("");
 }
@@ -2160,6 +2171,7 @@ function applyInputs(){
 $("#screen-tune").addEventListener("input",()=>{ $("#apply-hint").textContent="修改後尚未套用"; });
 $("#btn-apply").addEventListener("click",()=>{
   applyInputs();
+  saveLocal();
   $("#apply-hint").textContent="已套用 —— 下一場戰鬥生效";
   toast("參數已套用，於下一場戰鬥生效");
 });
@@ -2178,7 +2190,8 @@ $("#btn-reset-cfg").addEventListener("click",()=>{
   ENC = { roster:[...ENC_DEFAULT.roster], events:[] };
   syncHeroVitals(); applyOutfit();
   renderGeneral(); renderEditors(); renderHeroStats(); renderSpells(); renderMates(); renderItems(); renderOutfitPane();
-  $("#apply-hint").textContent="已恢復預設（自訂實體已清除）";
+  saveLocal();
+  $("#apply-hint").textContent="已恢復預設（自訂實體已清除，暫存已同步覆寫）";
 });
 
 /* ---- 匯出／匯入 ---- */
@@ -2224,103 +2237,134 @@ $("#btn-export").addEventListener("click",()=>{
   toast("參數已匯出為 JSON");
 });
 $("#btn-import").addEventListener("click",()=>$("#import-file").click());
+/* ---- 套用一份設定資料（匯入檔／瀏覽器暫存共用） ---- */
+function applyConfigData(data){
+  if(!data || !data.cfg) throw new Error("缺少 cfg 欄位");
+  CFG = Object.assign(JSON.parse(JSON.stringify(CFG_DEFAULT)), data.cfg);
+  delete CFG.enemy; // 舊版欄位不再使用
+  if(data.qteTable){
+    QTE_TABLE = JSON.parse(JSON.stringify(QTE_TABLE_DEFAULT));
+    for(const lv of [1,2,3,4,5]) if(data.qteTable[lv]) Object.assign(QTE_TABLE[lv], data.qteTable[lv]);
+  }
+  if(data.hero){
+    hero.name = data.hero.name || hero.name;
+    hero.idn = IDN_LIST.includes(data.hero.idn) ? data.hero.idn : hero.idn;
+    hero.role = data.hero.role || hero.role;
+    hero.stats = Object.assign({...STAT_DEFAULT}, data.hero.stats||data.heroStats||{});
+  } else if(data.heroStats) hero.stats = Object.assign({...STAT_DEFAULT}, data.heroStats);
+  // v3：完整實體清單
+  if(Array.isArray(data.mates)){
+    mates = data.mates.map(m=>hydrateMate({
+      id:m.id||uid("m"), name:m.name||"角色", idn:IDN_LIST.includes(m.idn)?m.idn:"人",
+      role:m.role||"自訂角色", in:!!m.in, detail:m.detail||"",
+      stats:Object.assign({體魄:10,武藝:10,輕捷:10,靈術:10,意志:10}, m.stats||{})
+    }));
+  }
+  let legacyCounts=null;
+  if(Array.isArray(data.monsters)){
+    legacyCounts = data.monsters.some(m=>m.count!=null) ? data.monsters.map(m=>({id:m.id, count:m.count??0})) : null;
+    monsters = data.monsters.map(m=>hydrateMonster({
+      ...m,
+      id:m.id||uid("mon"), name:m.name||"怪物", idn:IDN_LIST.includes(m.idn)?m.idn:"鬼",
+      hp:m.hp??100, agiP:m.agiP??8
+    }));
+    if(!monsters.length) monsters = MONSTERS_DEFAULT.map(hydrateMonster);
+  } else if(data.cfg && data.cfg.enemy){
+    // v2 相容：單一敵方參數 → 轉為預設敵人定義
+    const e=data.cfg.enemy;
+    monsters=[hydrateMonster({id:"mon1", name:"敵人A", idn:"鬼", hp:e.hp??120,
+      atkMin:e.atkMin??10, atkMax:e.atkMax??18, agiP:e.agiP??8})];
+    legacyCounts=[{id:"mon1", count:e.count??1}];
+  }
+  // 關卡編成：v5 直接讀；舊版由 count 重建序列
+  const importedEncounter = (data.encounter && Array.isArray(data.encounter.roster))
+    ? data.encounter
+    : (Array.isArray(data.levels) && data.levels.find(lv=>Array.isArray(lv.roster))) || null;
+  if(importedEncounter){
+    ENC.roster = importedEncounter.roster.filter(id=>monsters.some(m=>m.id===id)).slice(0,6);
+    ENC.events = (Array.isArray(importedEncounter.events)?importedEncounter.events:[]).map(ev=>({
+      id:ev.id||uid("ev"), round:Math.max(1,Math.round(ev.round??1)),
+      type:Object.keys(EVENT_TYPES).includes(ev.type)?ev.type:"msg",
+      val:ev.val??1, text:ev.text||"",
+      monsterId:monsters.some(m=>m.id===ev.monsterId)?ev.monsterId:monsters[0].id
+    }));
+  } else {
+    ENC.roster=[]; ENC.events=[];
+    (legacyCounts||[]).forEach(lc=>{
+      if(!monsters.some(m=>m.id===lc.id)) return;
+      for(let i=0;i<Math.min(6,Math.round(lc.count||0));i++){
+    if(ENC.roster.length<6) ENC.roster.push(lc.id);
+      }
+    });
+    if(!ENC.roster.length && monsters.length) ENC.roster=[monsters[0].id];
+  }
+  if(Array.isArray(data.items)){
+    items = data.items.map(i=>({
+      id:i.id||uid("i"), name:i.name||"道具",
+      effect:["heal","def","plot"].includes(i.effect)?i.effect:"heal",
+      val:i.val??0, cnt:i.cnt??1, carry:!!i.carry
+    }));
+  } else if(data.items && typeof data.items==="object"){
+    // v2 相容：覆蓋式物件
+    items.forEach(it=>{
+      const d=data.items[it.id]; if(!d) return;
+      if(d.cnt!=null) it.cnt=d.cnt;
+      if(d.heal!=null){ it.effect="heal"; it.val=d.heal; }
+      if(d.def!=null){ it.effect="def"; it.val=d.def; }
+    });
+  }
+  if(Array.isArray(data.spells)){
+    spells = data.spells.map(s=>({
+      id:s.id||uid("s"), name:s.name||"靈術",
+      san:s.san??2, chk:SPELL_CHK.includes(s.chk)?s.chk:"靈術",
+      type:Object.keys(SPELL_TYPES).includes(s.type)?s.type:"dmg",
+      vmin:s.vmin??10, vmax:s.vmax??0, stun:s.stun??0, dur:s.dur??0
+    }));
+  }
+  if(Array.isArray(data.outfits) && data.outfits.length){
+    outfits = data.outfits.map(o=>({
+      id:o.id||uid("o"), name:o.name||"服裝", def:o.def??0,
+      buffStat:STAT_KEYS.includes(o.buffStat)?o.buffStat:"", buffVal:o.buffVal??0, src:o.src||""
+    }));
+    activeOutfitId = outfits.some(o=>o.id===data.activeOutfit)?data.activeOutfit:outfits[0].id;
+  }
+  syncHeroVitals(); applyOutfit();
+  renderGeneral(); renderEditors(); renderHeroStats(); renderSpells(); renderMates(); renderItems(); renderOutfitPane();
+}
+
+/* ---- 瀏覽器暫存（localStorage 自動保存已套用的狀態） ---- */
+const LS_KEY = "battle-ui-proto-config";
+let lsTimer = null;
+let lsPaused = false;   // 清除暫存後暫停自動保存，直到下次套用／匯入／重設
+function saveLocal(){
+  lsPaused = false;
+  try{
+    localStorage.setItem(LS_KEY, JSON.stringify(collectConfig()));
+    const el=$("#ls-hint");
+    if(el){ const t=new Date(); el.textContent=`已自動暫存於此瀏覽器 ${String(t.getHours()).padStart(2,"0")}:${String(t.getMinutes()).padStart(2,"0")}:${String(t.getSeconds()).padStart(2,"0")}`; }
+  }catch(err){ /* 隱私模式或空間不足時靜默略過 */ }
+}
+function scheduleSave(){ if(lsPaused) return; clearTimeout(lsTimer); lsTimer=setTimeout(saveLocal, 600); }
+function loadLocal(){
+  try{
+    const raw=localStorage.getItem(LS_KEY);
+    if(!raw) return false;
+    applyConfigData(JSON.parse(raw));
+    const el=$("#ls-hint"); if(el) el.textContent="已載入此瀏覽器的暫存參數";
+    return true;
+  }catch(err){
+    try{ localStorage.removeItem(LS_KEY); }catch(_){}
+    return false;
+  }
+}
+
 $("#import-file").addEventListener("change",e=>{
   const f=e.target.files[0]; if(!f) return;
   const reader=new FileReader();
   reader.onload=()=>{
     try{
-      const data=JSON.parse(reader.result);
-      if(!data.cfg) throw new Error("缺少 cfg 欄位");
-      CFG = Object.assign(JSON.parse(JSON.stringify(CFG_DEFAULT)), data.cfg);
-      delete CFG.enemy; // 舊版欄位不再使用
-      if(data.qteTable){
-        QTE_TABLE = JSON.parse(JSON.stringify(QTE_TABLE_DEFAULT));
-        for(const lv of [1,2,3,4,5]) if(data.qteTable[lv]) Object.assign(QTE_TABLE[lv], data.qteTable[lv]);
-      }
-      if(data.hero){
-        hero.name = data.hero.name || hero.name;
-        hero.idn = IDN_LIST.includes(data.hero.idn) ? data.hero.idn : hero.idn;
-        hero.role = data.hero.role || hero.role;
-        hero.stats = Object.assign({...STAT_DEFAULT}, data.hero.stats||data.heroStats||{});
-      } else if(data.heroStats) hero.stats = Object.assign({...STAT_DEFAULT}, data.heroStats);
-      // v3：完整實體清單
-      if(Array.isArray(data.mates)){
-        mates = data.mates.map(m=>hydrateMate({
-          id:m.id||uid("m"), name:m.name||"角色", idn:IDN_LIST.includes(m.idn)?m.idn:"人",
-          role:m.role||"自訂角色", in:!!m.in, detail:m.detail||"",
-          stats:Object.assign({體魄:10,武藝:10,輕捷:10,靈術:10,意志:10}, m.stats||{})
-        }));
-      }
-      let legacyCounts=null;
-      if(Array.isArray(data.monsters)){
-        legacyCounts = data.monsters.some(m=>m.count!=null) ? data.monsters.map(m=>({id:m.id, count:m.count??0})) : null;
-        monsters = data.monsters.map(m=>hydrateMonster({
-          ...m,
-          id:m.id||uid("mon"), name:m.name||"怪物", idn:IDN_LIST.includes(m.idn)?m.idn:"鬼",
-          hp:m.hp??100, agiP:m.agiP??8
-        }));
-        if(!monsters.length) monsters = MONSTERS_DEFAULT.map(hydrateMonster);
-      } else if(data.cfg && data.cfg.enemy){
-        // v2 相容：單一敵方參數 → 轉為預設敵人定義
-        const e=data.cfg.enemy;
-        monsters=[hydrateMonster({id:"mon1", name:"敵人A", idn:"鬼", hp:e.hp??120,
-          atkMin:e.atkMin??10, atkMax:e.atkMax??18, agiP:e.agiP??8})];
-        legacyCounts=[{id:"mon1", count:e.count??1}];
-      }
-      // 關卡編成：v5 直接讀；舊版由 count 重建序列
-      const importedEncounter = (data.encounter && Array.isArray(data.encounter.roster))
-        ? data.encounter
-        : (Array.isArray(data.levels) && data.levels.find(lv=>Array.isArray(lv.roster))) || null;
-      if(importedEncounter){
-        ENC.roster = importedEncounter.roster.filter(id=>monsters.some(m=>m.id===id)).slice(0,6);
-        ENC.events = (Array.isArray(importedEncounter.events)?importedEncounter.events:[]).map(ev=>({
-          id:ev.id||uid("ev"), round:Math.max(1,Math.round(ev.round??1)),
-          type:Object.keys(EVENT_TYPES).includes(ev.type)?ev.type:"msg",
-          val:ev.val??1, text:ev.text||"",
-          monsterId:monsters.some(m=>m.id===ev.monsterId)?ev.monsterId:monsters[0].id
-        }));
-      } else {
-        ENC.roster=[]; ENC.events=[];
-        (legacyCounts||[]).forEach(lc=>{
-          if(!monsters.some(m=>m.id===lc.id)) return;
-          for(let i=0;i<Math.min(6,Math.round(lc.count||0));i++){
-            if(ENC.roster.length<6) ENC.roster.push(lc.id);
-          }
-        });
-        if(!ENC.roster.length && monsters.length) ENC.roster=[monsters[0].id];
-      }
-      if(Array.isArray(data.items)){
-        items = data.items.map(i=>({
-          id:i.id||uid("i"), name:i.name||"道具",
-          effect:["heal","def","plot"].includes(i.effect)?i.effect:"heal",
-          val:i.val??0, cnt:i.cnt??1, carry:!!i.carry
-        }));
-      } else if(data.items && typeof data.items==="object"){
-        // v2 相容：覆蓋式物件
-        items.forEach(it=>{
-          const d=data.items[it.id]; if(!d) return;
-          if(d.cnt!=null) it.cnt=d.cnt;
-          if(d.heal!=null){ it.effect="heal"; it.val=d.heal; }
-          if(d.def!=null){ it.effect="def"; it.val=d.def; }
-        });
-      }
-      if(Array.isArray(data.spells)){
-        spells = data.spells.map(s=>({
-          id:s.id||uid("s"), name:s.name||"靈術",
-          san:s.san??2, chk:SPELL_CHK.includes(s.chk)?s.chk:"靈術",
-          type:Object.keys(SPELL_TYPES).includes(s.type)?s.type:"dmg",
-          vmin:s.vmin??10, vmax:s.vmax??0, stun:s.stun??0, dur:s.dur??0
-        }));
-      }
-      if(Array.isArray(data.outfits) && data.outfits.length){
-        outfits = data.outfits.map(o=>({
-          id:o.id||uid("o"), name:o.name||"服裝", def:o.def??0,
-          buffStat:STAT_KEYS.includes(o.buffStat)?o.buffStat:"", buffVal:o.buffVal??0, src:o.src||""
-        }));
-        activeOutfitId = outfits.some(o=>o.id===data.activeOutfit)?data.activeOutfit:outfits[0].id;
-      }
-      syncHeroVitals(); applyOutfit();
-      renderGeneral(); renderEditors(); renderHeroStats(); renderSpells(); renderMates(); renderItems(); renderOutfitPane();
+      applyConfigData(JSON.parse(reader.result));
+      saveLocal();
       $("#apply-hint").textContent="已匯入 —— 下一場戰鬥生效";
       toast("參數已匯入");
     }catch(err){
@@ -2368,11 +2412,13 @@ function simulateOne(){
   function enemyTurn(){
     for(const en of E){
       if(en.hp<=0) continue;
+      const rate=en.def.sFix??CFG.npcS;
+      if(Math.random()>=rate) continue;               // 成功率判定：未過則落空
       const pool=[{u:H,hero:true},...M.filter(m=>m.hp>0).map(m=>({u:m}))];
       const pick=pool[rnd(0,pool.length-1)];
       const R=counterR(en.idn, pick.u.idn);
       const ev=dcResolve(pick.hero?H.agi:pick.u.agi);
-      const d=coreDamage(en.def.art||10, en.def.sFix??CFG.npcS, R, pick.hero?H.def:0, ev.dc, en.def.T??1);
+      const d=coreDamage(en.def.art||10, rate, R, pick.hero?H.def:0, ev.dc, en.def.T??1);
       if(d<=0) continue;
       if(pick.hero) dmgTaken+=d;
       pick.u.hp-=d;
@@ -2394,6 +2440,7 @@ function simulateOne(){
     if(!aliveE().length) return;
     for(const m of M){
       if(m.hp<=0) continue;
+      if(Math.random()>=m.sFix) continue;             // 成功率判定：未過則落空
       const ae2=aliveE(); if(!ae2.length) return;
       const target2=ae2[rnd(0,ae2.length-1)];
       const R=counterR(m.idn, target2.idn);
@@ -2441,6 +2488,20 @@ $("#btn-sim").addEventListener("click",()=>{
 applyOutfit();
 renderHeroStats(); renderMates(); renderItems(); renderSpells(); renderOutfitPane();
 renderGeneral(); renderEditors();
+
+/* ---- 瀏覽器暫存：載入 + 自動保存掛點 ---- */
+loadLocal();   // 開頁自動載回上次已套用的參數（無暫存或格式壞掉則維持預設）
+document.addEventListener("click",()=>scheduleSave());     // 新增／刪除實體、編成、切裝等直接變更
+document.addEventListener("change",()=>scheduleSave());    // 下拉、勾選類變更
+window.addEventListener("beforeunload",()=>{ if(lsPaused) return; try{saveLocal();}catch(_){} });
+$("#btn-clear-ls").addEventListener("click",()=>{
+  if(!confirm("清除此瀏覽器的暫存參數？重新整理後將回到預設。（按「套用設定」／匯入／恢復預設會重新開始自動暫存）")) return;
+  clearTimeout(lsTimer);
+  lsPaused = true;
+  try{ localStorage.removeItem(LS_KEY); }catch(_){}
+  $("#ls-hint").textContent="暫存已清除 —— 套用／匯入／恢復預設後會重新自動暫存";
+  toast("瀏覽器暫存已清除");
+});
 </script>
 </body>
 </html>
